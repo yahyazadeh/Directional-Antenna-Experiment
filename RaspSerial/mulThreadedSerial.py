@@ -8,13 +8,17 @@
 
 import time, serial, sys, threading, argparse, glob
 from sys import platform as _platform
+import socket
+
+#global variables
 
 global flDone
 global cliArgs
 global writeBuffer
 global portsList
 global portCount
-
+global defaultStartPort
+global defaultServerIP
 
 def getUserInput(prompt):
     if sys.version[0] >= '3':
@@ -23,14 +27,13 @@ def getUserInput(prompt):
         return raw_input(prompt)
 
 
-def listenSerial():
+def listenSerial(threadNum):
     global flDone
     global cliArgs
     global writeBuffer
-    global portCount
     global portsList
     try:
-        ser = serial.Serial(portsList[portCount], cliArgs.baudRate, timeout=cliArgs.timeout, 
+        ser = serial.Serial(portsList[threadNum], cliArgs.baudRate, timeout=cliArgs.timeout,
                             parity=serial.PARITY_NONE, rtscts=cliArgs.flowcontrol)
         ser.flushInput()
         ser.flushOutput()
@@ -38,14 +41,11 @@ def listenSerial():
             # make sure reset pin is low for the platforms that need it
             ser.setDTR(0)
             ser.setRTS(0)
-
     except serial.SerialException as ex:
         sys.stderr.write("\nSerial exception:\n\t{}".format(ex))
         flDone = True
         return
-    
     sys.stderr.write("Using port {}, baudrate {}\n".format(ser.portstr, cliArgs.baudRate))
-
     while (not flDone):
         # write
         if writeBuffer:
@@ -56,7 +56,7 @@ def listenSerial():
         serLen = ser.inWaiting()
         if serLen > 0:
             s = ser.read(serLen)
-            #print 'Received : %d bytes' % serLen
+            sendMsg(s, threadNum)
             if type(s) is str: 
                 sys.stdout.write(s)
             else:
@@ -101,17 +101,17 @@ def serialPortsList():
 
 
 def getCliArgs():
-
     global portsList
     global portCount
+    global defaultStartPort
     #defaultSerialPort = "/dev/ttyUSB0"
     #print portsList
     defaultSerialPort = portsList[portCount]
     defaultBaudRate = 38400
+    defaultStartPort = 1030
+    defaultServerIP = '192.168.0.1'
     version = "0.6/2016.06.30"
-
     parser = argparse.ArgumentParser(description="MansOS serial communicator", prog="ser")
-
     parser.add_argument('-s', '--serial_port', dest='serialPort', action='store', default=defaultSerialPort,
         help='serial port to listen (default: ' + defaultSerialPort + ' )')
     parser.add_argument('-b', '--baud_rate', dest='baudRate', action='store', default=defaultBaudRate,
@@ -123,11 +123,28 @@ def getCliArgs():
     parser.add_argument('-t', '--timeout', dest='timeout', action='store', default=1,
         help='timeout for serial (default: 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
-
     parser.add_argument('-l', '--list', action="store_true", default=False,
         help='list available serial ports')
-
+    parser.add_argument('-tP', '--tcpStartPort', action="store", dest='tcpStartPort', default=defaultStartPort,
+                        help='TCP Start Port (default: 1030)')
+    parser.add_argument('-sIP', '--serverIP', action="store", dest='serverIP', default=defaultServerIP,
+                        help='Destination Server IP (default: 192.168.0.1)')
     return parser.parse_args()
+
+
+def sendMsg(data, threadNum):
+    global defaultServerIP
+    global defaultStartPort
+    # Create a TCP/IP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Connect the socket to the port where the server is listening
+    server_address = (defaultServerIP, defaultStartPort + threadNum)
+    try:
+        sock.connect(server_address)
+        sock.sendall(data)
+        sock.close()
+    except:
+        pass
 
 
 def main():
@@ -138,20 +155,15 @@ def main():
     global portCount
     portCount = 0
     flDone = False
-
     portsList = serialPortsList()
     if len(portsList)<=0 :
         sys.stderr.write("No serial ports found!\n")
         return 1
-
     cliArgs = getCliArgs()
-
     if cliArgs.serialPort in ("ACM", "chronos"):
         cliArgs.serialPort = "/dev/ttyACM0" 
         cliArgs.baudRate = 115200
-
     sys.stderr.write("MansOS serial port access app, press Ctrl+C to exit\n")
-
     # Detect the platform. Serial ports are named differently for each
     if sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
         sys.stderr.write("Detected Linux\n")
@@ -168,7 +180,7 @@ def main():
     for ports in portsList:
         #skipping ttyAMA0 port
         if portCount != 0:
-            threading.Thread(target=listenSerial).start()
+            threading.Thread(target=listenSerial,args=portCount-1).start()
         portCount +=1
     # Keyboard scanning loop
     writeBuffer = ""

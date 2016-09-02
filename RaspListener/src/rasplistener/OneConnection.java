@@ -49,7 +49,7 @@ public class OneConnection {
             System.out.println("Log:: " + s);
 //            byte[] contentInBytes = s.getBytes();
 //            fop.write(contentInBytes);
-            bufferWritter.write(s);
+            bufferWritter.write(s + "\n");
         }
 //        fop.flush();
 //        fop.close();

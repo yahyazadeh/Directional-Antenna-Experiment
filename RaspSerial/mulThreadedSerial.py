@@ -37,10 +37,6 @@ def listenSerial(threadNum):
                             parity=serial.PARITY_NONE, rtscts=cliArgs.flowcontrol)
         ser.flushInput()
         ser.flushOutput()
-        if cliArgs.platform not in ['xm1000', 'z1'] :
-            # make sure reset pin is low for the platforms that need it
-            ser.setDTR(0)
-            ser.setRTS(0)
     except serial.SerialException as ex:
         sys.stderr.write("\nSerial exception:\n\t{}".format(ex))
         flDone = True
@@ -56,7 +52,7 @@ def listenSerial(threadNum):
         serLen = ser.inWaiting()
         if serLen > 0:
             s = ser.read(serLen)
-            sendMsg(s, threadNum)
+            sendMsg(s, threadNum, cliArgs.tcpStartPort, cliArgs.serverIP)
             if type(s) is str: 
                 sys.stdout.write(s)
             else:
@@ -78,16 +74,10 @@ def serialPortsList():
         :returns:
             A list of the serial ports available on the system
     """
-    if sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-        # this excludes your current terminal "/dev/tty"
-        ports = glob.glob('/dev/tty[UA]*')
-    elif sys.platform.startswith('darwin'):
-        ports = glob.glob('/dev/tty.usb*')
-    elif sys.platform.startswith('win'):
-        ports = ['COM%s' % (i + 1) for i in range(256)]
+    if sys.platform.startswith('linux'):
+        ports = glob.glob('/dev/tty[U]*')
     else:
         raise EnvironmentError('Unsupported platform')
-
     result = []
     for port in ports:
         try:
@@ -104,6 +94,7 @@ def getCliArgs():
     global portsList
     global portCount
     global defaultStartPort
+    global defaultServerIP
     #defaultSerialPort = "/dev/ttyUSB0"
     #print portsList
     defaultSerialPort = portsList[portCount]
@@ -125,26 +116,26 @@ def getCliArgs():
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
     parser.add_argument('-l', '--list', action="store_true", default=False,
         help='list available serial ports')
-    parser.add_argument('-tP', '--tcpStartPort', action="store", dest='tcpStartPort', default=defaultStartPort,
+    parser.add_argument('-tSP', '--tcpStartPort', action="store", dest='tcpStartPort', default=defaultStartPort,
                         help='TCP Start Port (default: 1030)')
     parser.add_argument('-sIP', '--serverIP', action="store", dest='serverIP', default=defaultServerIP,
                         help='Destination Server IP (default: 192.168.0.1)')
     return parser.parse_args()
 
 
-def sendMsg(data, threadNum):
+def sendMsg(data, threadNum, tcpStartPort, serverIP):
     global defaultServerIP
     global defaultStartPort
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # Connect the socket to the port where the server is listening
-    server_address = (defaultServerIP, defaultStartPort + threadNum)
+    server_address = (serverIP, int(tcpStartPort) + threadNum)
     try:
         sock.connect(server_address)
         sock.sendall(data)
         sock.close()
     except:
-        pass
+        sys.stderr.write('Error in opening the socket')
 
 
 def main():
@@ -160,9 +151,6 @@ def main():
         sys.stderr.write("No serial ports found!\n")
         return 1
     cliArgs = getCliArgs()
-    if cliArgs.serialPort in ("ACM", "chronos"):
-        cliArgs.serialPort = "/dev/ttyACM0" 
-        cliArgs.baudRate = 115200
     sys.stderr.write("MansOS serial port access app, press Ctrl+C to exit\n")
     # Detect the platform. Serial ports are named differently for each
     if sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
@@ -178,9 +166,7 @@ def main():
         sys.stderr.write("\n")
         return 0
     for ports in portsList:
-        #skipping ttyAMA0 port
-        if portCount != 0:
-            threading.Thread(target=listenSerial,args=portCount-1).start()
+        threading.Thread(target=listenSerial,args=[portCount]).start()
         portCount +=1
     # Keyboard scanning loop
     writeBuffer = ""

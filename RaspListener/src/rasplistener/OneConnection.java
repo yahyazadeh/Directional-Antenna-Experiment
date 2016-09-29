@@ -9,8 +9,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -49,7 +47,7 @@ public class OneConnection {
             System.out.println("Log:: " + s);
 //            byte[] contentInBytes = s.getBytes();
 //            fop.write(contentInBytes);
-            bufferWritter.write(s + "\n");
+            bufferWritter.write(s);
         }
 //        fop.flush();
 //        fop.close();

@@ -5,6 +5,7 @@
  */
 package rasplistener;
 
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Level;
@@ -36,12 +37,15 @@ public class RaspListener {
                 Socket sock = ssock.accept();
                 System.out.println("Log:: Someone has made socket connection.");
 
-                OneConnection client = new OneConnection(sock);
-                String s = client.getRequest(args[1]);
+                SocketHelper sh = new SocketHelper(sock);
+                sh.wirteToFile(args[1]);
                 sock.close();
             }
-        } catch (Exception ex) {
-            Logger.getLogger(RaspListener.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (BindException ex) {
+            System.out.println("Run using sudo!");
+        }
+        catch (Exception ex) {
+            System.out.println("Exception Occured!");
         }
     }
 

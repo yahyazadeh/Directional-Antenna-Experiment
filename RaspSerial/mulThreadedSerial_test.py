@@ -53,15 +53,16 @@ def listenSerial(threadNum):
         if serLen > 0:
             s = ser.read(serLen)
             sendMsg(s, threadNum, cliArgs.tcpStartPort, cliArgs.serverIP)
-            if type(s) is str:
-                sys.stdout.write(s)
-            else:
-                for c in s:
-                    sys.stdout.write( "{}".format(chr(c)) )
+            with open("test"+threadNum+".txt", "a") as myfile:
+                myfile.write(s)
+            #if type(s) is str:
+            #    sys.stdout.write(s)
+            #else:
+            #    for c in s:
+            #        sys.stdout.write( "{}".format(chr(c)) )
             #sys.stdout.flush()
         # allow other threads to run
         time.sleep(1)
-
     sys.stderr.write("\nDone\n")
     ser.close()
     return 0
@@ -76,8 +77,6 @@ def serialPortsList():
     """
     if sys.platform.startswith('linux'):
         ports = glob.glob('/dev/tty[U]*')
-    elif sys.platform.startswith('darwin'):
-        ports = glob.glob('/dev/tty.usb*')
     else:
         raise EnvironmentError('Unsupported platform')
     result = []
@@ -132,12 +131,12 @@ def sendMsg(data, threadNum, tcpStartPort, serverIP):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # Connect the socket to the port where the server is listening
     server_address = (serverIP, int(tcpStartPort) + threadNum)
-    #try:
-    #    sock.connect(server_address)
-    #    sock.sendall(data)
-    #    sock.close()
-    #except:
-    #    sys.stderr.write('Error in opening the socket')
+    try:
+        sock.connect(server_address)
+        sock.sendall(data)
+        sock.close()
+    except:
+        sys.stderr.write('Error in opening the socket')
 
 
 def main():

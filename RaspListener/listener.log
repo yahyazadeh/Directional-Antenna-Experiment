@@ -1,0 +1,9 @@
+2016-11-02 20:57:32 ERROR RaspListener:47 - Error: 
+java.net.BindException: Permission denied
+	at java.net.PlainSocketImpl.socketBind(Native Method)
+	at java.net.AbstractPlainSocketImpl.bind(AbstractPlainSocketImpl.java:387)
+	at java.net.ServerSocket.bind(ServerSocket.java:375)
+	at java.net.ServerSocket.<init>(ServerSocket.java:237)
+	at java.net.ServerSocket.<init>(ServerSocket.java:128)
+	at listener.RaspListener.main(RaspListener.java:34)
+2016-11-02 21:13:01 ERROR RaspListener:47 - java.net.BindException: Permission denied

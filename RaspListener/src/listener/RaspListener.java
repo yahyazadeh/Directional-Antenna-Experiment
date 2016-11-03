@@ -3,19 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package rasplistener;
+package listener;
 
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author Daniel
  */
 public class RaspListener {
+
+    final static Logger logger = Logger.getLogger(RaspListener.class);
 
     /**
      * @param args the command line arguments
@@ -31,21 +32,21 @@ public class RaspListener {
         ServerSocket ssock;
         try {
             ssock = new ServerSocket(myPort);
-            System.out.println("Log:: Port " + myPort + " opened.");
+            logger.info("Port " + myPort + " has been opened.");
 
             while (true) {
                 Socket sock = ssock.accept();
-                System.out.println("Log:: Someone has made socket connection.");
+                logger.info("Someone has made socket connection.");
 
                 SocketHelper sh = new SocketHelper(sock);
                 sh.wirteToFile(args[1]);
                 sock.close();
+                logger.info("socket has been closed.");
             }
         } catch (BindException ex) {
-            System.out.println("Run using sudo!");
-        }
-        catch (Exception ex) {
-            System.out.println("Exception Occured!");
+            logger.error(ex);
+        } catch (Exception ex) {
+            logger.error(ex);
         }
     }
 

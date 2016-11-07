@@ -3,8 +3,9 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/Users/daniel/NetBeansProjects/Directional-Antenna-Experiment-/RaspListener/src/rasplistener/RaspListener.java</file>
-            <file>file:/Users/daniel/NetBeansProjects/Directional-Antenna-Experiment-/RaspListener/src/rasplistener/SocketHelper.java</file>
+            <file>file:/Users/daniel/NetBeansProjects/Directional-Antenna-Experiment-/RaspListener/src/log4j.properties</file>
+            <file>file:/Users/daniel/NetBeansProjects/Directional-Antenna-Experiment-/RaspListener/src/listener/RaspListener.java</file>
+            <file>file:/Users/daniel/NetBeansProjects/Directional-Antenna-Experiment-/RaspListener/src/listener/SocketHelper.java</file>
         </group>
     </open-files>
 </project-private>

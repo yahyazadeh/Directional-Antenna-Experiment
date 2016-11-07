@@ -7,3 +7,25 @@ java.net.BindException: Permission denied
 	at java.net.ServerSocket.<init>(ServerSocket.java:128)
 	at listener.RaspListener.main(RaspListener.java:34)
 2016-11-02 21:13:01 ERROR RaspListener:47 - java.net.BindException: Permission denied
+2016-11-07 13:11:29 ERROR RaspListener:68 - java.net.BindException: Permission denied
+2016-11-07 13:14:17 INFO  RaspListener:37 - Port 1033 has been opened.
+2016-11-07 13:15:04 INFO  RaspListener:41 - Client/127.0.0.1 has made socket connection.
+2016-11-07 13:15:04 INFO  RaspListener:49 - New file <testFile.txt> has been created.
+2016-11-07 13:15:04 INFO  RaspListener:52 - File <testFile.txt> has been opend.
+2016-11-07 13:15:37 INFO  RaspListener:62 - File <testFile.txt> has been closed.
+2016-11-07 13:15:37 INFO  RaspListener:65 - socket has been closed.
+2016-11-07 13:22:52 INFO  RaspListener:37 - Port 1033 has been opened.
+2016-11-07 13:22:59 INFO  RaspListener:41 - Client/127.0.0.1 has made socket connection to the1033 port
+2016-11-07 13:22:59 INFO  RaspListener:52 - File <testFile.txt> has been opend.
+2016-11-07 13:24:10 INFO  RaspListener:62 - File <testFile.txt> has been closed.
+2016-11-07 13:24:10 INFO  RaspListener:65 - Client/127.0.0.1 connection on the1033 port has been closed.
+2016-11-07 13:31:35 INFO  RaspListener:37 - Port 1033 has been opened.
+2016-11-07 13:31:42 INFO  RaspListener:41 - Client/127.0.0.1 has made socket connection to the 1033 port
+2016-11-07 13:31:42 INFO  RaspListener:52 - File <testFile.txt> has been opend.
+2016-11-07 13:31:56 INFO  RaspListener:62 - File <testFile.txt> has been closed.
+2016-11-07 13:31:56 INFO  RaspListener:65 - Client/127.0.0.1 connection on the 1033 port has been closed.
+2016-11-07 13:32:25 INFO  RaspListener:37 - Port 1033 has been opened.
+2016-11-07 13:32:30 INFO  RaspListener:41 - Client/127.0.0.1 has made socket connection to the 1033 port
+2016-11-07 13:32:30 INFO  RaspListener:52 - File <testFile.txt> has been opend.
+2016-11-07 13:32:35 INFO  RaspListener:62 - File <testFile.txt> has been closed.
+2016-11-07 13:32:35 INFO  RaspListener:65 - Client/127.0.0.1's connection on the 1033 port has been closed.

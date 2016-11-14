@@ -56,7 +56,7 @@ public class Sepand extends Application {
     private StringProperty phaserSrcCodePath = new SimpleStringProperty();
     final private String phaserInstallCommand = "make phaser upload"; // make phaser upload
     final private String phaserInstallSuccessSigniture = "Reset device";
-    final private int phaserInstallCommandNumberoFRetry = 5;
+    final private int phaserInstallCommandNumberoFRetry = 1;
 
     private TableView motesTable = new TableView();
 

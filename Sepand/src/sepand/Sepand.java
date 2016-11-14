@@ -36,6 +36,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import org.apache.log4j.Logger;
 import sepand.dialog.NewGatewayDialog;
 import sepand.dialog.PasswordDialog;
 import sepand.entities.Gateway;
@@ -47,6 +48,8 @@ import sepand.util.CommandUtil;
  * @author daniel
  */
 public class Sepand extends Application {
+    
+    final static Logger logger = Logger.getLogger(Sepand.class);
 
     final private CommandUtil cmd = new CommandUtil();
     private StringProperty defaultMonitorSrcCodePath = new SimpleStringProperty();
@@ -268,7 +271,9 @@ public class Sepand extends Application {
         do {
             output = cmd.executeCommand(phaserSrcCodePath.get(), phaserInstallCommand, true, password);
             retry--;
+            logger.info(retry);
         } while (!output.contains(phaserInstallSuccessSigniture) && retry >= 0);
+        logger.info(output);
         if (!output.contains(phaserInstallSuccessSigniture)) {
             Alert alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error Dialog");
@@ -276,6 +281,7 @@ public class Sepand extends Application {
             alert.setContentText("Ooops, there was an error!");
             alert.showAndWait();
         }
+        logger.info("done!");
     }
 
     /**

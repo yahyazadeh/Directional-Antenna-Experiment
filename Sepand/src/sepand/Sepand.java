@@ -48,7 +48,7 @@ import sepand.util.CommandUtil;
  * @author daniel
  */
 public class Sepand extends Application {
-    
+
     final static Logger logger = Logger.getLogger(Sepand.class);
 
     final private CommandUtil cmd = new CommandUtil();
@@ -220,7 +220,7 @@ public class Sepand extends Application {
             }
         });
         motesInstGrid.add(addGatewayButton, 0, 1);
-        
+
         TitledPane titledPane4 = new TitledPane("Installation", motesInstGrid);
         titledPane4.setCollapsible(false);
         titledPane4.setPadding(new Insets(0, 5, 5, 5));
@@ -258,7 +258,7 @@ public class Sepand extends Application {
         result.ifPresent(password -> runInstallPhaserCommand(password));
         //        System.out.println(cmd.executeCommand(command));
     }
-    
+
     private void addGateway() {
         NewGatewayDialog pd = new NewGatewayDialog();
         Optional<String> result = pd.showAndWait();
@@ -268,11 +268,13 @@ public class Sepand extends Application {
     private void runInstallPhaserCommand(String password) {
         String output;
         int retry = phaserInstallCommandNumberoFRetry;
-        do {
-            output = cmd.executeCommand(phaserSrcCodePath.get(), phaserInstallCommand, true, password);
-            retry--;
-            logger.info(String.valueOf(retry));
-        } while (!output.contains(phaserInstallSuccessSigniture) && retry >= 0);
+//        do {
+//            output = cmd.executeCommand(phaserSrcCodePath.get(), phaserInstallCommand, true, password);
+//            retry--;
+//            logger.info(String.valueOf(retry));
+//        } while (!output.contains(phaserInstallSuccessSigniture) && retry >= 0);
+
+        output = cmd.executeCommand(phaserSrcCodePath.get(), phaserInstallCommand, true, password);
         logger.info(output);
         if (!output.contains(phaserInstallSuccessSigniture)) {
             output = "";
@@ -281,7 +283,14 @@ public class Sepand extends Application {
             alert.setHeaderText("Error!");
             alert.setContentText("Ooops, there was an error!");
             alert.showAndWait();
+        } else {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Information Dialog");
+            alert.setHeaderText("Success!");
+            alert.setContentText("Installation has done successfully!");
+            alert.showAndWait();
         }
+
         output = "";
         logger.info("done!");
     }

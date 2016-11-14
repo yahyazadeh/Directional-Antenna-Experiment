@@ -49,8 +49,6 @@ import sepand.util.CommandUtil;
  */
 public class Sepand extends Application {
 
-    final static Logger logger = Logger.getLogger(Sepand.class);
-
     final private CommandUtil cmd = new CommandUtil();
     private StringProperty defaultMonitorSrcCodePath = new SimpleStringProperty();
     private StringProperty phaserSrcCodePath = new SimpleStringProperty();
@@ -268,16 +266,14 @@ public class Sepand extends Application {
     private void runInstallPhaserCommand(String password) {
         String output;
         int retry = phaserInstallCommandNumberoFRetry;
-//        do {
-//            output = cmd.executeCommand(phaserSrcCodePath.get(), phaserInstallCommand, true, password);
-//            retry--;
-//            logger.info(String.valueOf(retry));
-//        } while (!output.contains(phaserInstallSuccessSigniture) && retry >= 0);
+        do {
+            output = cmd.executeCommand(phaserSrcCodePath.get(), phaserInstallCommand, true, password);
+            retry--;
+        } while (!output.contains(phaserInstallSuccessSigniture) && retry >= 0);
 
         output = cmd.executeCommand(phaserSrcCodePath.get(), phaserInstallCommand, true, password);
-        logger.info(output);
+
         if (!output.contains(phaserInstallSuccessSigniture)) {
-            output = "";
             Alert alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error Dialog");
             alert.setHeaderText("Error!");
@@ -292,7 +288,7 @@ public class Sepand extends Application {
         }
 
         output = "";
-        logger.info("done!");
+        
     }
 
     /**

@@ -18,18 +18,20 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import sepand.entities.Gateway;
 
 /**
  *
  * @author daniel
  */
-public class NewGatewayDialog extends Dialog<String> {
+public class NewGatewayDialog extends Dialog<Gateway> {
 
     private TextField nameField;
     private TextField ipAddressField;
     private TextField usernameField;
     private PasswordField passwordField;
     private Button connectButton;
+    private Gateway gateway;
 
     public NewGatewayDialog() {
         setTitle("New Gateway");
@@ -78,13 +80,22 @@ public class NewGatewayDialog extends Dialog<String> {
 
         setResultConverter(dialogButton -> {
             if (dialogButton == addGatewayButtonType) {
-                return passwordField.getText();
+                createNewGateway();
+                return gateway;
             }
             return null;
         });
     }
+    
+    private void createNewGateway(){
+        gateway = new Gateway();
+        gateway.setName(nameField.getText());
+        gateway.setIpAddress(ipAddressField.getText());
+        gateway.setUsername(usernameField.getText());
+        gateway.setPassword(passwordField.getText());
+    }
 
-    public PasswordField getPasswordField() {
-        return passwordField;
+    public Gateway getGateway() {
+        return gateway;
     }
 }

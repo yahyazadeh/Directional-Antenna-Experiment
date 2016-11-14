@@ -259,8 +259,8 @@ public class Sepand extends Application {
 
     private void addGateway() {
         NewGatewayDialog pd = new NewGatewayDialog();
-        Optional<String> result = pd.showAndWait();
-        result.ifPresent(password -> System.out.println("test"));
+        Optional<Gateway> result = pd.showAndWait();
+        result.ifPresent(gateway -> System.out.println("test"));
     }
 
     private void runInstallPhaserCommand(String password) {

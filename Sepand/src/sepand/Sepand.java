@@ -51,7 +51,7 @@ public class Sepand extends Application {
     final private CommandUtil cmd = new CommandUtil();
     private StringProperty defaultMonitorSrcCodePath = new SimpleStringProperty();
     private StringProperty phaserSrcCodePath = new SimpleStringProperty();
-    final private String phaserInstallCommand = "ls"; // make phaser upload
+    final private String phaserInstallCommand = "make phaser upload"; // make phaser upload
     final private String phaserInstallSuccessSigniture = "Reset device";
     final private int phaserInstallCommandNumberoFRetry = 5;
 

@@ -271,16 +271,18 @@ public class Sepand extends Application {
         do {
             output = cmd.executeCommand(phaserSrcCodePath.get(), phaserInstallCommand, true, password);
             retry--;
-            logger.info(retry);
+            logger.info(String.valueOf(retry));
         } while (!output.contains(phaserInstallSuccessSigniture) && retry >= 0);
         logger.info(output);
         if (!output.contains(phaserInstallSuccessSigniture)) {
+            output = "";
             Alert alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error Dialog");
             alert.setHeaderText("Error!");
             alert.setContentText("Ooops, there was an error!");
             alert.showAndWait();
         }
+        output = "";
         logger.info("done!");
     }
 

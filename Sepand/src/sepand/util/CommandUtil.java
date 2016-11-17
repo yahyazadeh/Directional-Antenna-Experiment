@@ -54,12 +54,7 @@ public class CommandUtil {
             e.printStackTrace();
         }
 
-        if (su) {
-            return errorOutput.toString();
-        } else {
-            return output.toString();
-        }
+        return output.append(errorOutput).toString();
         
-
     }
 }

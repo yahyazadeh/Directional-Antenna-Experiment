@@ -114,8 +114,9 @@ public class NewGatewayDialog extends Dialog<Gateway> {
         String output = cmd.executeCommand("", commandString, false, "");
         if (output.contains("Last login")) {
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     private void createNewGateway() {

@@ -55,3 +55,33 @@
 2016-11-17 21:55:36 ERROR CommandUtil:50 - Error Line: Password:Sorry, try again.
 2016-11-17 21:55:36 ERROR CommandUtil:50 - Error Line: Password:
 2016-11-17 21:55:36 ERROR CommandUtil:50 - Error Line: sudo: 1 incorrect password attempt
+2016-11-18 11:58:43 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'iuiuiu' scp -r null hjhj@rttty:/home/pi/github/MansOS/apps/santa-test/
+2016-11-18 11:58:43 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 11:58:43 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'iuiuiu' ssh hjhj@rttty 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 11:58:43 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 11:58:43 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'iuiuiu' ssh hjhj@rttty 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 11:58:43 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 12:00:05 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'oko' scp -r null k@io:/home/pi/github/MansOS/apps/santa-test/
+2016-11-18 12:00:05 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'iuiuiu' scp -r null hjhj@rttty:/home/pi/github/MansOS/apps/santa-test/
+2016-11-18 12:00:05 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 12:00:05 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 12:00:05 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'iuiuiu' ssh hjhj@rttty 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 12:00:05 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'oko' ssh k@io 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 12:00:05 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 12:00:05 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 12:00:05 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'iuiuiu' ssh hjhj@rttty 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 12:00:05 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'oko' ssh k@io 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 12:00:05 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 12:00:05 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 15:01:07 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'JJ' scp -r /Users/daniel/Documents JJJ@jjj:/home/pi/github/MansOS/apps/santa-test/
+2016-11-18 15:01:07 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'h' scp -r /Users/daniel/Documents hh@hhh:/home/pi/github/MansOS/apps/santa-test/
+2016-11-18 15:01:07 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 15:01:07 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 15:01:07 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'JJ' ssh JJJ@jjj 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 15:01:07 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'h' ssh hh@hhh 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 15:01:07 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 15:01:07 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 15:01:07 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'h' ssh hh@hhh 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 15:01:07 INFO  CommandUtil:30 - Cmd: cd '' ; sshpass -p 'JJ' ssh JJJ@jjj 'cd /home/pi/github/MansOS/apps/santa-test/ ; export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload ; exit'
+2016-11-18 15:01:07 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found
+2016-11-18 15:01:07 ERROR CommandUtil:50 - Error Line: /bin/sh: sshpass: command not found

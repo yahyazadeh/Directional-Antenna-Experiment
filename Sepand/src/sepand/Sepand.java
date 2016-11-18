@@ -6,13 +6,11 @@
 package sepand;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Optional;
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
+import java.util.prefs.Preferences;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -21,8 +19,6 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -31,7 +27,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
@@ -42,16 +37,16 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import org.apache.log4j.Logger;
 import sepand.dialog.NewGatewayDialog;
 import sepand.dialog.PasswordDialog;
 import sepand.entities.Gateway;
+import sepand.entities.GatewaysListWrapper;
 import sepand.enums.SourceCode;
 import sepand.util.CommandUtil;
 
@@ -61,18 +56,34 @@ import sepand.util.CommandUtil;
  */
 public class Sepand extends Application {
 
+    final static Logger logger = Logger.getLogger(Sepand.class);
+    
     final private CommandUtil cmd = new CommandUtil();
-    private StringProperty defaultMonitorSrcCodePath = new SimpleStringProperty();
-    private StringProperty phaserSrcCodePath = new SimpleStringProperty();
     final private String phaserInstallCommand = "make phaser upload"; // make phaser upload
     final private String phaserInstallSuccessSigniture = "Reset device";
     final private int phaserInstallCommandNumberoFRetry = 1;
+    final private String motesInstallSuccessSigniture = "****";
+    final private int motesInstallCommandNumberoFRetry = 1;
+    final private String defaultCodePathOnGateway = "/home/pi/github/MansOS/apps/santa-test/";
     final private String moteInstallCommand = "export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload";
+    final private String xmlFilePath = "setting.xml";
 
-    private TableView motesTable = new TableView();
+    private StringProperty defaultMonitorSrcCodePath = new SimpleStringProperty();
+    private StringProperty phaserSrcCodePath = new SimpleStringProperty();
+    private TableView<Gateway> motesTable = new TableView<>();
     private ObservableList<Gateway> gateways = FXCollections.observableArrayList();
-    private final ProgressIndicator phaserPI = new ProgressIndicator(0);
-    private final ProgressIndicator motesPI = new ProgressIndicator(0);
+
+    @Override
+    public void stop() throws Exception {
+        storeCurrentSetting();
+        super.stop(); 
+    }
+
+    @Override
+    public void init() throws Exception {
+        restoreCurrentSetting();
+        super.init();
+    }
 
     @Override
     public void start(Stage primaryStage) {
@@ -154,8 +165,6 @@ public class Sepand extends Application {
             }
         });
         installationGrid.add(phaserInstallButton, 3, 0);
-        phaserPI.setVisible(false);
-        installationGrid.add(phaserPI, 4, 0);
 
         TitledPane titledPane2 = new TitledPane("Installation", installationGrid);
         titledPane2.setCollapsible(false);
@@ -216,22 +225,44 @@ public class Sepand extends Application {
         motesInstGrid.setPadding(new Insets(5, 5, 5, 5));
 
         TableColumn nameCol = new TableColumn("Gateway Name");
-        nameCol.setCellValueFactory(new PropertyValueFactory<Gateway,String>("name"));
+        nameCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("name"));
         TableColumn ipCol = new TableColumn("Gateway IP");
-        ipCol.setCellValueFactory(new PropertyValueFactory<Gateway,String>("ipAddress"));
-        motesTable.getColumns().addAll(nameCol, ipCol);
+        ipCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("ipAddress"));
+        TableColumn isCol = new TableColumn("Installation Status");
+        isCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("installationStatus"));
+        motesTable.getColumns().addAll(nameCol, ipCol, isCol);
         motesTable.setItems(gateways);
         motesInstGrid.add(motesTable, 0, 0);
 
-        Button addGatewayButton = new Button("Add");
-        addGatewayButton.setOnAction(
+        Button newGatewayButton = new Button("New");
+        newGatewayButton.setOnAction(
                 new EventHandler<ActionEvent>() {
             @Override
             public void handle(final ActionEvent e) {
-                addGateway();
+                newGateway();
             }
         });
-        motesInstGrid.add(addGatewayButton, 0, 1);
+        motesInstGrid.add(newGatewayButton, 0, 1);
+        
+        Button deleteGatewayButton = new Button("Delete");
+        deleteGatewayButton.setOnAction(
+                new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(final ActionEvent e) {
+                deleteGateway();
+            }
+        });
+        motesInstGrid.add(deleteGatewayButton, 1, 1);
+
+        Button installPhaserButton = new Button("Install");
+        installPhaserButton.setOnAction(
+                new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(final ActionEvent e) {
+                runInstallForAllMotesCommand();
+            }
+        });
+        motesInstGrid.add(installPhaserButton, 2, 1);
 
         TitledPane titledPane4 = new TitledPane("Installation", motesInstGrid);
         titledPane4.setCollapsible(false);
@@ -271,16 +302,23 @@ public class Sepand extends Application {
         //        System.out.println(cmd.executeCommand(command));
     }
 
-    private void addGateway() {
+    private void newGateway() {
         NewGatewayDialog pd = new NewGatewayDialog();
         Optional<Gateway> result = pd.showAndWait();
         result.ifPresent(gateway -> gateways.add(gateway));
     }
+    
+    private void deleteGateway() {
+        Gateway selectedGateway = motesTable.getSelectionModel().getSelectedItem();
+        if (selectedGateway != null) {
+            gateways.remove(selectedGateway);
+        }
+    }
 
     private void runInstallPhaserCommand(String password) {
-        
+
         Dialog pleaseWaitDialog = new Dialog();
-        
+
         Task<Boolean> task = new Task<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -326,9 +364,9 @@ public class Sepand extends Application {
                     alert.showAndWait();
                 }
             } catch (InterruptedException ex) {
-                java.util.logging.Logger.getLogger(Sepand.class.getName()).log(Level.SEVERE, null, ex);
+                logger.error("Error Line: " + ex);
             } catch (ExecutionException ex) {
-                java.util.logging.Logger.getLogger(Sepand.class.getName()).log(Level.SEVERE, null, ex);
+                logger.error("Error Line: " + ex);
             }
 
         });
@@ -337,16 +375,136 @@ public class Sepand extends Application {
     }
 
     private void runInstallForAllMotesCommand() {
-        // TODO: Should be completed
         String command = moteInstallCommand;
+        command = "cd " + defaultCodePathOnGateway + " ; " + command;
         for (Gateway gateway : gateways) {
             installOnMotesOfGateway(gateway, command);
         }
     }
 
     private void installOnMotesOfGateway(Gateway gateway, String command) {
-        // TODO: Should be completed
-//        cmd.executeSSHCommand(gateway.getIpAddress(), gateway.getUsername(), gateway.getPassword(), command);
+        Task<Boolean> task = new Task<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                String scpResult = "";
+                String sshResult = "";
+                scpResult = cmd.executeSCPCommand(gateway.getIpAddress(), gateway.getUsername(),
+                        gateway.getPassword(), defaultMonitorSrcCodePath.get(), defaultCodePathOnGateway);
+                if (scpResult.contains("")) {
+                    int retry = motesInstallCommandNumberoFRetry;
+                    do {
+                        sshResult = cmd.executeSSHCommand(gateway.getIpAddress(), gateway.getUsername(),
+                                gateway.getPassword(), command);
+                        retry--;
+                    } while (!sshResult.contains(motesInstallSuccessSigniture) && retry >= 0);
+                }
+                if (!sshResult.contains(motesInstallSuccessSigniture)) {
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        };
+
+        task.setOnRunning((e) -> {
+            gateway.setInstallationStatus("Please Waite...");
+        });
+        task.setOnSucceeded((e) -> {
+            try {
+                Boolean result = task.get();
+                if (!result) {
+                    gateway.setInstallationStatus("Error!");
+                } else {
+                    gateway.setInstallationStatus("Successful");
+                }
+            } catch (InterruptedException ex) {
+                logger.error("Error Line: " + ex);
+            } catch (ExecutionException ex) {
+                logger.error("Error Line: " + ex);
+            }
+        });
+        new Thread(task).start();
+    }
+
+    /**
+     * Loads data from the specified file.
+     *
+     * @param file
+     */
+    public void loadPersonDataFromFile(File file) {
+        try {
+            JAXBContext context = JAXBContext
+                    .newInstance(GatewaysListWrapper.class);
+            Unmarshaller um = context.createUnmarshaller();
+
+            // Reading XML from the file and unmarshalling.
+            GatewaysListWrapper wrapper = (GatewaysListWrapper) um.unmarshal(file);
+
+            gateways.clear();
+            gateways.addAll(wrapper.getGateways());
+
+        } catch (Exception e) { // catches ANY exception
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Could not load data");
+            alert.setContentText("Could not load data from file:\n" + file.getPath());
+
+            alert.showAndWait();
+        }
+    }
+
+    /**
+     * Saves the current data to the specified file.
+     *
+     * @param file
+     */
+    public void savePersonDataToFile(File file) {
+        try {
+            JAXBContext context = JAXBContext
+                    .newInstance(GatewaysListWrapper.class);
+            Marshaller m = context.createMarshaller();
+            m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+
+            // Wrapping gateway data.
+            GatewaysListWrapper wrapper = new GatewaysListWrapper();
+            wrapper.setGateways(gateways);
+
+            // Marshalling and saving XML to the file.
+            m.marshal(wrapper, file);
+
+        } catch (Exception e) { // catches ANY exception
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Could not save data");
+            alert.setContentText("Could not save data to file:\n" + file.getPath());
+
+            alert.showAndWait();
+        }
+    }
+
+    private void storeCurrentSetting() {
+        Preferences prefs = Preferences.userNodeForPackage(Sepand.class);
+        prefs.put("phaserSrcCodePath", phaserSrcCodePath.get());
+        prefs.put("defaultMonitorSrcCodePath", defaultMonitorSrcCodePath.get());
+        File file = new File(xmlFilePath);
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException ex) {
+                logger.error("Error Line: " + ex);
+            }
+        }
+        savePersonDataToFile(file);
+    }
+
+    private void restoreCurrentSetting() {
+        Preferences prefs = Preferences.userNodeForPackage(Sepand.class);
+        File file = new File(xmlFilePath);
+        if (file.exists()) {
+            loadPersonDataFromFile(file);
+        }
+        phaserSrcCodePath.set(prefs.get("phaserSrcCodePath", ""));
+        defaultMonitorSrcCodePath.set(prefs.get("defaultMonitorSrcCodePath", ""));
     }
 
     /**

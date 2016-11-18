@@ -88,5 +88,4 @@ public class Gateway {
         this.installationStatus.setValue(installationStatus);
     }
 
-
 }

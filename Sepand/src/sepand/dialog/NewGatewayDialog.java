@@ -18,8 +18,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import sepand.entities.Gateway;
 import sepand.util.CommandUtil;
 
@@ -57,6 +55,7 @@ public class NewGatewayDialog extends Dialog<Gateway> {
 
         nameField = new TextField();
         nameField.textProperty().bindBidirectional(gateway.nameProperty());
+        nameField.setPromptText("e.g. My Gateway");
         gatewayGrid.add(nameField, 1, 1);
 
         Label label2 = new Label("IP Address:");
@@ -64,6 +63,7 @@ public class NewGatewayDialog extends Dialog<Gateway> {
 
         ipAddressField = new TextField();
         ipAddressField.textProperty().bindBidirectional(gateway.ipAddressProperty());
+        ipAddressField.setPromptText("e.g. 192.168.0.2");
         gatewayGrid.add(ipAddressField, 1, 2);
 
         Label label3 = new Label("Username:");
@@ -71,6 +71,7 @@ public class NewGatewayDialog extends Dialog<Gateway> {
 
         usernameField = new TextField();
         usernameField.textProperty().bindBidirectional(gateway.usernameProperty());
+        usernameField.setPromptText("Username");
         gatewayGrid.add(usernameField, 1, 3);
 
         Label label4 = new Label("Password:");
@@ -101,7 +102,7 @@ public class NewGatewayDialog extends Dialog<Gateway> {
 
         getDialogPane().setContent(gatewayGrid);
 
-//        Platform.runLater(() -> passwordField.requestFocus());
+        Platform.runLater(() -> nameField.requestFocus());
 
         setResultConverter(dialogButton -> {
             if (dialogButton == addGatewayButtonType) {

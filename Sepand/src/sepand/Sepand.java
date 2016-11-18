@@ -19,6 +19,7 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -36,7 +37,10 @@ import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javax.xml.bind.JAXBContext;
@@ -62,11 +66,13 @@ public class Sepand extends Application {
     final private String phaserInstallCommand = "make phaser upload"; // make phaser upload
     final private String phaserInstallSuccessSigniture = "Reset device";
     final private int phaserInstallCommandNumberoFRetry = 1;
-    final private String motesInstallSuccessSigniture = "****";
+    final private String motesInstallSuccessSigniture = "Reset device";
     final private int motesInstallCommandNumberoFRetry = 1;
     final private String defaultCodePathOnGateway = "/home/pi/github/MansOS/apps/santa-test/";
     final private String moteInstallCommand = "export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload";
     final private String xmlFilePath = "setting.xml";
+    
+    final private String backgroundColor = "lightgrey";
 
     private StringProperty defaultMonitorSrcCodePath = new SimpleStringProperty();
     private StringProperty phaserSrcCodePath = new SimpleStringProperty();
@@ -92,6 +98,7 @@ public class Sepand extends Application {
         Scene scene = new Scene(root, 800, 600);
 
         TabPane tabPane = new TabPane();
+        tabPane.setStyle("-fx-background-color: " + backgroundColor);
         BorderPane mainPane = new BorderPane();
 
         //Create Tabs
@@ -101,24 +108,10 @@ public class Sepand extends Application {
 
         final FileChooser phaserfileChooser = new FileChooser();
 
-        GridPane phaserGrid = new GridPane();
-//        grid.setAlignment(Pos.CENTER);
-        phaserGrid.setHgap(10);
-        phaserGrid.setVgap(10);
-        phaserGrid.setPadding(new Insets(5, 5, 5, 5));
-
-        GridPane configGrid = new GridPane();
-//        grid.setAlignment(Pos.CENTER);
-        configGrid.setHgap(10);
-        configGrid.setVgap(10);
-        configGrid.setPadding(new Insets(5, 5, 5, 5));
-
         Label label2 = new Label("Phaser's source code path:");
-        configGrid.add(label2, 0, 1);
 
         TextField pTextField = new TextField();
         pTextField.textProperty().bindBidirectional(phaserSrcCodePath);
-        configGrid.add(pTextField, 1, 1);
 
         Button phaserOpenDlgButton = new Button("...");
         phaserOpenDlgButton.setOnAction(
@@ -131,32 +124,29 @@ public class Sepand extends Application {
                 }
             }
         });
-        configGrid.add(phaserOpenDlgButton, 2, 1);
+        
+        HBox phaserConfigHBox = new HBox(label2, pTextField, phaserOpenDlgButton);
+        phaserConfigHBox.setStyle("-fx-spacing: 5");
+        phaserConfigHBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(pTextField, Priority.ALWAYS);
 
-        TitledPane titledPane = new TitledPane("Configuration", configGrid);
+        TitledPane titledPane = new TitledPane("Configuration", phaserConfigHBox);
         titledPane.setCollapsible(false);
         titledPane.setPadding(new Insets(5, 5, 5, 5));
 
-        phaserGrid.add(titledPane, 0, 0);
-        GridPane.setHgrow(titledPane, Priority.ALWAYS);
-
-        GridPane installationGrid = new GridPane();
-//        grid.setAlignment(Pos.CENTER);
-        installationGrid.setHgap(10);
-        installationGrid.setVgap(10);
-        installationGrid.setPadding(new Insets(5, 5, 5, 5));
 
         Label label3 = new Label("Status:");
-        installationGrid.add(label3, 0, 0);
-
-        Label labelStatus = new Label("");
-        installationGrid.add(labelStatus, 1, 0);
+        
+        Label labelStatus = new Label(" ");
+        
+        Pane pane = new Pane();
 
         Button phaserCheckStatusButton = new Button("Check Status");
+        phaserCheckStatusButton.setMinWidth(100);
         phaserCheckStatusButton.setDisable(true);
-        installationGrid.add(phaserCheckStatusButton, 2, 0);
 
         Button phaserInstallButton = new Button("Install");
+        phaserInstallButton.setMinWidth(100);
         phaserInstallButton.setOnAction(
                 new EventHandler<ActionEvent>() {
             @Override
@@ -164,15 +154,21 @@ public class Sepand extends Application {
                 installPhaser();
             }
         });
-        installationGrid.add(phaserInstallButton, 3, 0);
 
-        TitledPane titledPane2 = new TitledPane("Installation", installationGrid);
+        HBox phaserInstallationHBox = new HBox(label3, labelStatus, pane, 
+                phaserCheckStatusButton, phaserInstallButton);
+        phaserInstallationHBox.setStyle("-fx-spacing: 5");
+        phaserInstallationHBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(pane, Priority.ALWAYS);
+        
+        TitledPane titledPane2 = new TitledPane("Installation", phaserInstallationHBox);
         titledPane2.setCollapsible(false);
         titledPane2.setPadding(new Insets(0, 5, 5, 5));
 
-        phaserGrid.add(titledPane2, 0, 1);
+        
+        VBox phaserVBox = new VBox(titledPane, titledPane2);
 
-        phaserTab.setContent(phaserGrid);
+        phaserTab.setContent(phaserVBox);
         tabPane.getTabs().add(phaserTab);
 
         Tab motesTab = new Tab();
@@ -181,23 +177,11 @@ public class Sepand extends Application {
 
         final FileChooser monitorfileChooser = new FileChooser();
 
-        GridPane motesGrid = new GridPane();
-//        grid.setAlignment(Pos.CENTER);
-        motesGrid.setHgap(10);
-        motesGrid.setVgap(10);
-        motesGrid.setPadding(new Insets(5, 5, 5, 5));
-
-        GridPane moteconfigGrid = new GridPane();
-        moteconfigGrid.setHgap(10);
-        moteconfigGrid.setVgap(10);
-        moteconfigGrid.setPadding(new Insets(5, 5, 5, 5));
 
         Label label1 = new Label("Default Monitor:");
-        moteconfigGrid.add(label1, 0, 0);
 
         TextField dmTextField = new TextField();
         dmTextField.textProperty().bindBidirectional(defaultMonitorSrcCodePath);
-        moteconfigGrid.add(dmTextField, 1, 0);
 
         Button monitorOpenDlgButton = new Button("...");
         monitorOpenDlgButton.setOnAction(
@@ -210,19 +194,16 @@ public class Sepand extends Application {
                 }
             }
         });
-        moteconfigGrid.add(monitorOpenDlgButton, 2, 0);
+        
+        HBox motesConfigHBox = new HBox(label1, dmTextField, monitorOpenDlgButton);
+        motesConfigHBox.setStyle("-fx-spacing: 5");
+        motesConfigHBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(dmTextField, Priority.ALWAYS);
 
-        TitledPane titledPane3 = new TitledPane("Configuration", moteconfigGrid);
+        TitledPane titledPane3 = new TitledPane("Configuration", motesConfigHBox);
         titledPane3.setCollapsible(false);
         titledPane3.setPadding(new Insets(5, 5, 5, 5));
 
-        motesGrid.add(titledPane3, 0, 0);
-        GridPane.setHgrow(titledPane3, Priority.ALWAYS);
-
-        GridPane motesInstGrid = new GridPane();
-        motesInstGrid.setHgap(10);
-        motesInstGrid.setVgap(10);
-        motesInstGrid.setPadding(new Insets(5, 5, 5, 5));
 
         TableColumn nameCol = new TableColumn("Gateway Name");
         nameCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("name"));
@@ -232,9 +213,10 @@ public class Sepand extends Application {
         isCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("installationStatus"));
         motesTable.getColumns().addAll(nameCol, ipCol, isCol);
         motesTable.setItems(gateways);
-        motesInstGrid.add(motesTable, 0, 0);
+
 
         Button newGatewayButton = new Button("New");
+        newGatewayButton.setMinWidth(80);
         newGatewayButton.setOnAction(
                 new EventHandler<ActionEvent>() {
             @Override
@@ -242,9 +224,9 @@ public class Sepand extends Application {
                 newGateway();
             }
         });
-        motesInstGrid.add(newGatewayButton, 0, 1);
         
         Button deleteGatewayButton = new Button("Delete");
+        deleteGatewayButton.setMinWidth(80);
         deleteGatewayButton.setOnAction(
                 new EventHandler<ActionEvent>() {
             @Override
@@ -252,9 +234,9 @@ public class Sepand extends Application {
                 deleteGateway();
             }
         });
-        motesInstGrid.add(deleteGatewayButton, 1, 1);
 
         Button installPhaserButton = new Button("Install");
+        installPhaserButton.setMinWidth(80);
         installPhaserButton.setOnAction(
                 new EventHandler<ActionEvent>() {
             @Override
@@ -262,15 +244,22 @@ public class Sepand extends Application {
                 runInstallForAllMotesCommand();
             }
         });
-        motesInstGrid.add(installPhaserButton, 2, 1);
+        
+        HBox motesInstallButtonsHBox = new HBox(newGatewayButton, deleteGatewayButton, installPhaserButton);
+        motesInstallButtonsHBox.setStyle("-fx-spacing: 5");
+        motesInstallButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
+        
+        VBox moteInstallVBox = new VBox(motesTable, motesInstallButtonsHBox);
+        moteInstallVBox.setSpacing(10);
 
-        TitledPane titledPane4 = new TitledPane("Installation", motesInstGrid);
+        TitledPane titledPane4 = new TitledPane("Installation", moteInstallVBox);
         titledPane4.setCollapsible(false);
         titledPane4.setPadding(new Insets(0, 5, 5, 5));
 
-        motesGrid.add(titledPane4, 0, 1);
+        VBox motesVBox = new VBox(titledPane3, titledPane4);
+        
 
-        motesTab.setContent(motesGrid);
+        motesTab.setContent(motesVBox);
         tabPane.getTabs().add(motesTab);
 
         mainPane.setCenter(tabPane);
@@ -441,7 +430,9 @@ public class Sepand extends Application {
             GatewaysListWrapper wrapper = (GatewaysListWrapper) um.unmarshal(file);
 
             gateways.clear();
-            gateways.addAll(wrapper.getGateways());
+            if (wrapper.getGateways() != null) {
+                gateways.addAll(wrapper.getGateways());
+            }
 
         } catch (Exception e) { // catches ANY exception
             Alert alert = new Alert(AlertType.ERROR);

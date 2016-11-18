@@ -57,4 +57,15 @@ public class CommandUtil {
         return output.append(errorOutput).toString();
         
     }
+    
+    public String executeSSHCommand(String host, String username, String password, String sshCommand) {
+        
+        // This method uses sshpass program to use SSH with inline password.
+        // Make sure that it is installed before run Sepand
+        // sshpass -p 'YourPassword' ssh user@host 'YourCommand ; exit'
+        String commandString = "sshpass -p '" + password + "' ssh " + username + "@" + host 
+                + " '" + sshCommand + " ; exit'";
+        return executeCommand("", commandString, false, "");
+        
+    }
 }

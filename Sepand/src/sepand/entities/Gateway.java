@@ -6,46 +6,87 @@
 package sepand.entities;
 
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 /**
  *
  * @author daniel
  */
 public class Gateway {
+
     private SimpleStringProperty name;
     private SimpleStringProperty ipAddress;
     private SimpleStringProperty username;
     private SimpleStringProperty password;
+    private SimpleStringProperty installationStatus;
 
-    public String getName() {
-        return name.get();
+    public Gateway() {
+        name = new SimpleStringProperty();
+        ipAddress = new SimpleStringProperty();
+        username = new SimpleStringProperty();
+        password = new SimpleStringProperty();
+        installationStatus = new SimpleStringProperty();
     }
 
-    public void setName(String name) {
-        this.name.set(name);
+    public final String getName() {
+        return name.getValue();
+    }
+    
+    public StringProperty nameProperty() {
+        return name;
     }
 
-    public String getIpAddress() {
-        return ipAddress.get();
+    public final void setName(String name) {
+        this.name.setValue(name);
     }
 
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress.set(ipAddress);
+    public final String getIpAddress() {
+        return ipAddress.getValue();
+    }
+    
+    public StringProperty ipAddressProperty() {
+        return ipAddress;
     }
 
-    public String getUsername() {
-        return username.get();
+    public final void setIpAddress(String ipAddress) {
+        this.ipAddress.setValue(ipAddress);
     }
 
-    public void setUsername(String username) {
-        this.username.set(username);
+    public final String getUsername() {
+        return username.getValue();
+    }
+    
+    public StringProperty usernameProperty() {
+        return username;
     }
 
-    public String getPassword() {
-        return password.get();
+    public final void setUsername(String username) {
+        this.username.setValue(username);
     }
 
-    public void setPassword(String password) {
-        this.password.set(password);
+    public final String getPassword() {
+        return password.getValue();
     }
+    
+    public StringProperty passwordProperty() {
+        return password;
+    }
+
+    public final void setPassword(String password) {
+        this.password.setValue(password);
+    }
+
+    public final String getInstallationStatus() {
+        return installationStatus.getValue();
+    }
+    
+    public StringProperty installationStatusProperty() {
+        return installationStatus;
+    }
+
+    public final void setInstallationStatus(String installationStatus) {
+        this.installationStatus.setValue(installationStatus);
+    }
+
+
 }

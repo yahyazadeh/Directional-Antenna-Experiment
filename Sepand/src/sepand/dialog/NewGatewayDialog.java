@@ -39,6 +39,7 @@ public class NewGatewayDialog extends Dialog<Gateway> {
     private CommandUtil cmd;
 
     public NewGatewayDialog() {
+        gateway = new Gateway();
         setTitle("New Gateway");
         setHeaderText("Please enter the gateway information:");
 
@@ -55,24 +56,28 @@ public class NewGatewayDialog extends Dialog<Gateway> {
         gatewayGrid.add(label1, 0, 1);
 
         nameField = new TextField();
+        nameField.textProperty().bindBidirectional(gateway.nameProperty());
         gatewayGrid.add(nameField, 1, 1);
 
         Label label2 = new Label("IP Address:");
         gatewayGrid.add(label2, 0, 2);
 
         ipAddressField = new TextField();
+        ipAddressField.textProperty().bindBidirectional(gateway.ipAddressProperty());
         gatewayGrid.add(ipAddressField, 1, 2);
 
         Label label3 = new Label("Username:");
         gatewayGrid.add(label3, 0, 3);
 
         usernameField = new TextField();
+        usernameField.textProperty().bindBidirectional(gateway.usernameProperty());
         gatewayGrid.add(usernameField, 1, 3);
 
         Label label4 = new Label("Password:");
         gatewayGrid.add(label4, 0, 4);
 
         passwordField = new PasswordField();
+        passwordField.textProperty().bindBidirectional(gateway.passwordProperty());
         passwordField.setPromptText("Password");
         gatewayGrid.add(passwordField, 1, 4);
 
@@ -81,7 +86,7 @@ public class NewGatewayDialog extends Dialog<Gateway> {
                 new EventHandler<ActionEvent>() {
             @Override
             public void handle(final ActionEvent e) {
-                if (connectViaSSH(ipAddressField.getText(), usernameField.getText(), passwordField.getText())) {
+                if (checkConnectivity(ipAddressField.getText(), usernameField.getText(), passwordField.getText())) {
                     connectionStatus.setText("Successful!");
                 }
                 else {
@@ -96,35 +101,23 @@ public class NewGatewayDialog extends Dialog<Gateway> {
 
         getDialogPane().setContent(gatewayGrid);
 
-        Platform.runLater(() -> passwordField.requestFocus());
+//        Platform.runLater(() -> passwordField.requestFocus());
 
         setResultConverter(dialogButton -> {
             if (dialogButton == addGatewayButtonType) {
-                createNewGateway();
                 return gateway;
             }
             return null;
         });
     }
 
-    private boolean connectViaSSH(String host, String username, String password) {
+    private boolean checkConnectivity(String host, String username, String password) {
         cmd = new CommandUtil();
-        // sshpass -p 'YourPassword' ssh user@host
-        String commandString = "sshpass -p '" + password + "' ssh " + username + "@" + host;
-        String output = cmd.executeCommand("", commandString, false, "");
-        if (output.contains("Last login")) {
+        if (cmd.executeSSHCommand(host, username, password, "lscpu").contains("Architecture:")) {
             return true;
         } else {
             return false;
         }
-    }
-
-    private void createNewGateway() {
-        gateway = new Gateway();
-        gateway.setName(nameField.getText());
-        gateway.setIpAddress(ipAddressField.getText());
-        gateway.setUsername(usernameField.getText());
-        gateway.setPassword(passwordField.getText());
     }
 
     public Gateway getGateway() {

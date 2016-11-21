@@ -68,7 +68,7 @@ public class Sepand extends Application {
     final private int phaserInstallCommandNumberoFRetry = 1;
     final private String motesInstallSuccessSigniture = "Reset device";
     final private int motesInstallCommandNumberoFRetry = 1;
-    final private String defaultCodePathOnGateway = "/home/pi/github/MansOS/apps/santa-test/src/app_monitor";
+    final private String defaultCodePathOnGateway = "/home/pi/github/MansOS/apps/santa-test/src/app_monitor/";
     final private String moteInstallCommand = "export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload";
     final private String xmlFilePath = "setting.xml";
     

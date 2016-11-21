@@ -73,8 +73,8 @@ public class CommandUtil {
         
         // This method uses sshpass program to use SSH with inline password.
         // Make sure that it is installed before run Sepand
-        // sshpass -p 'YourPassword' scp -r /some/local/path user@example.com:/some/remote/path
-        String commandString = "sshpass -p '" + password + "' scp -r " + localPath + " " + username + "@" + host 
+        // sshpass -p 'YourPassword' scp /some/local/path/* user@example.com:/some/remote/path
+        String commandString = "sshpass -p '" + password + "' scp " + localPath + " " + username + "@" + host 
                 + ":" + remotePath;
         return executeCommand("", commandString, false, "");
         

@@ -68,7 +68,7 @@ public class Sepand extends Application {
     final private int phaserInstallCommandNumberoFRetry = 1;
     final private String motesInstallSuccessSigniture = "Reset device";
     final private int motesInstallCommandNumberoFRetry = 1;
-    final private String defaultCodePathOnGateway = "/home/pi/github/MansOS/apps/santa-test/";
+    final private String defaultCodePathOnGateway = "/home/pi/github/MansOS/apps/santa-test/src/app_monitor";
     final private String moteInstallCommand = "export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload";
     final private String xmlFilePath = "setting.xml";
     
@@ -378,7 +378,7 @@ public class Sepand extends Application {
                 String scpResult = "";
                 String sshResult = "";
                 scpResult = cmd.executeSCPCommand(gateway.getIpAddress(), gateway.getUsername(),
-                        gateway.getPassword(), defaultMonitorSrcCodePath.get(), defaultCodePathOnGateway);
+                        gateway.getPassword(), defaultMonitorSrcCodePath.get() + "/*", defaultCodePathOnGateway);
                 if (scpResult.contains("")) {
                     int retry = motesInstallCommandNumberoFRetry;
                     do {
@@ -396,7 +396,7 @@ public class Sepand extends Application {
         };
 
         task.setOnRunning((e) -> {
-            gateway.setInstallationStatus("Please Waite...");
+            gateway.setInstallationStatus("Please Wait...");
         });
         task.setOnSucceeded((e) -> {
             try {

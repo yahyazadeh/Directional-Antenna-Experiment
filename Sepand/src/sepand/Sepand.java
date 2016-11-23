@@ -5,10 +5,18 @@
  */
 package sepand;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
@@ -36,7 +44,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -51,6 +58,7 @@ import sepand.dialog.NewGatewayDialog;
 import sepand.dialog.PasswordDialog;
 import sepand.entities.Gateway;
 import sepand.entities.GatewaysListWrapper;
+import sepand.entities.Parameter;
 import sepand.enums.SourceCode;
 import sepand.util.CommandUtil;
 
@@ -61,7 +69,7 @@ import sepand.util.CommandUtil;
 public class Sepand extends Application {
 
     final static Logger logger = Logger.getLogger(Sepand.class);
-    
+
     final private CommandUtil cmd = new CommandUtil();
     final private String phaserInstallCommand = "make phaser upload"; // make phaser upload
     final private String phaserInstallSuccessSigniture = "Reset device";
@@ -71,18 +79,23 @@ public class Sepand extends Application {
     final private String defaultCodePathOnGateway = "/home/pi/github/MansOS/apps/santa-test/src/app_monitor/";
     final private String moteInstallCommand = "export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload";
     final private String xmlFilePath = "setting.xml";
-    
+    final private String startParameterSection = "start parameter section";
+    final private String endParameterSection = "end parameter section";
+
     final private String backgroundColor = "lightgrey";
 
     private StringProperty defaultMonitorSrcCodePath = new SimpleStringProperty();
     private StringProperty phaserSrcCodePath = new SimpleStringProperty();
+    private StringProperty phaserSrcCodeMainFilePath = new SimpleStringProperty();
     private TableView<Gateway> motesTable = new TableView<>();
     private ObservableList<Gateway> gateways = FXCollections.observableArrayList();
+    private ObservableList<Parameter> parameters = FXCollections.observableArrayList();
+    private VBox parametersVBox = new VBox();
 
     @Override
     public void stop() throws Exception {
         storeCurrentSetting();
-        super.stop(); 
+        super.stop();
     }
 
     @Override
@@ -121,10 +134,12 @@ public class Sepand extends Application {
                 File file = phaserfileChooser.showOpenDialog(primaryStage);
                 if (file != null) {
                     setFilePath(file, SourceCode.PHASER);
+                    loadParametersFromFile();
+                    refreshParameterSection();
                 }
             }
         });
-        
+
         HBox phaserConfigHBox = new HBox(label2, pTextField, phaserOpenDlgButton);
         phaserConfigHBox.setStyle("-fx-spacing: 5");
         phaserConfigHBox.setAlignment(Pos.CENTER_LEFT);
@@ -134,11 +149,43 @@ public class Sepand extends Application {
         titledPane.setCollapsible(false);
         titledPane.setPadding(new Insets(5, 5, 5, 5));
 
+        parametersVBox.setSpacing(7);
+
+        Button refreshParameterButton = new Button("Refresh");
+        refreshParameterButton.setMinWidth(100);
+        refreshParameterButton.setOnAction(
+                new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(final ActionEvent e) {
+                loadParametersFromFile();
+                refreshParameterSection();
+            }
+        });
+
+        Button applyParameterButton = new Button("Apply");
+        applyParameterButton.setMinWidth(100);
+        applyParameterButton.setOnAction(
+                new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(final ActionEvent e) {
+                saveParametersToFile();
+            }
+        });
+
+        HBox parameterButtonsHBox = new HBox(refreshParameterButton, applyParameterButton);
+        parameterButtonsHBox.setStyle("-fx-spacing: 5");
+        parameterButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox parentBox = new VBox(parametersVBox, parameterButtonsHBox);
+        parentBox.setSpacing(10);
+        TitledPane parametersTP = new TitledPane("Parameters", parentBox);
+        parametersTP.setCollapsible(false);
+        parametersTP.setPadding(new Insets(0, 5, 5, 5));
 
         Label label3 = new Label("Status:");
-        
+
         Label labelStatus = new Label(" ");
-        
+
         Pane pane = new Pane();
 
         Button phaserCheckStatusButton = new Button("Check Status");
@@ -155,18 +202,17 @@ public class Sepand extends Application {
             }
         });
 
-        HBox phaserInstallationHBox = new HBox(label3, labelStatus, pane, 
+        HBox phaserInstallationHBox = new HBox(label3, labelStatus, pane,
                 phaserCheckStatusButton, phaserInstallButton);
         phaserInstallationHBox.setStyle("-fx-spacing: 5");
         phaserInstallationHBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(pane, Priority.ALWAYS);
-        
+
         TitledPane titledPane2 = new TitledPane("Installation", phaserInstallationHBox);
         titledPane2.setCollapsible(false);
         titledPane2.setPadding(new Insets(0, 5, 5, 5));
 
-        
-        VBox phaserVBox = new VBox(titledPane, titledPane2);
+        VBox phaserVBox = new VBox(titledPane, parametersTP, titledPane2);
 
         phaserTab.setContent(phaserVBox);
         tabPane.getTabs().add(phaserTab);
@@ -176,7 +222,6 @@ public class Sepand extends Application {
         motesTab.setText("Motes");
 
         final FileChooser monitorfileChooser = new FileChooser();
-
 
         Label label1 = new Label("Default Monitor:");
 
@@ -194,7 +239,7 @@ public class Sepand extends Application {
                 }
             }
         });
-        
+
         HBox motesConfigHBox = new HBox(label1, dmTextField, monitorOpenDlgButton);
         motesConfigHBox.setStyle("-fx-spacing: 5");
         motesConfigHBox.setAlignment(Pos.CENTER_LEFT);
@@ -203,7 +248,6 @@ public class Sepand extends Application {
         TitledPane titledPane3 = new TitledPane("Configuration", motesConfigHBox);
         titledPane3.setCollapsible(false);
         titledPane3.setPadding(new Insets(5, 5, 5, 5));
-
 
         TableColumn nameCol = new TableColumn("Gateway Name");
         nameCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("name"));
@@ -214,7 +258,6 @@ public class Sepand extends Application {
         motesTable.getColumns().addAll(nameCol, ipCol, isCol);
         motesTable.setItems(gateways);
 
-
         Button newGatewayButton = new Button("New");
         newGatewayButton.setMinWidth(80);
         newGatewayButton.setOnAction(
@@ -224,7 +267,7 @@ public class Sepand extends Application {
                 newGateway();
             }
         });
-        
+
         Button deleteGatewayButton = new Button("Delete");
         deleteGatewayButton.setMinWidth(80);
         deleteGatewayButton.setOnAction(
@@ -244,11 +287,11 @@ public class Sepand extends Application {
                 runInstallForAllMotesCommand();
             }
         });
-        
+
         HBox motesInstallButtonsHBox = new HBox(newGatewayButton, deleteGatewayButton, installPhaserButton);
         motesInstallButtonsHBox.setStyle("-fx-spacing: 5");
         motesInstallButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
-        
+
         VBox moteInstallVBox = new VBox(motesTable, motesInstallButtonsHBox);
         moteInstallVBox.setSpacing(10);
 
@@ -257,7 +300,6 @@ public class Sepand extends Application {
         titledPane4.setPadding(new Insets(0, 5, 5, 5));
 
         VBox motesVBox = new VBox(titledPane3, titledPane4);
-        
 
         motesTab.setContent(motesVBox);
         tabPane.getTabs().add(motesTab);
@@ -276,11 +318,10 @@ public class Sepand extends Application {
         String path = file.getParent();
         if (sourceCode == SourceCode.DEFAULT_MONITOR) {
             defaultMonitorSrcCodePath.set(path);
-            System.out.println(defaultMonitorSrcCodePath);
         }
         if (sourceCode == SourceCode.PHASER) {
             phaserSrcCodePath.set(path);
-            System.out.println(phaserSrcCodePath);
+            phaserSrcCodeMainFilePath.set(file.getAbsolutePath());
         }
     }
 
@@ -296,7 +337,7 @@ public class Sepand extends Application {
         Optional<Gateway> result = pd.showAndWait();
         result.ifPresent(gateway -> gateways.add(gateway));
     }
-    
+
     private void deleteGateway() {
         Gateway selectedGateway = motesTable.getSelectionModel().getSelectedItem();
         if (selectedGateway != null) {
@@ -415,12 +456,128 @@ public class Sepand extends Application {
         new Thread(task).start();
     }
 
+    private void loadParametersFromFile() {
+        BufferedReader bufferedReader;
+        try {
+            bufferedReader = new BufferedReader(
+                    new FileReader(phaserSrcCodeMainFilePath.get()));
+
+            List<Parameter> loadedParams = new ArrayList<>();
+            String line = bufferedReader.readLine();
+
+            boolean found = false;
+            while (line != null) {
+                if (line.toLowerCase().contains(startParameterSection)) {
+                    found = true;
+                } else if (line.toLowerCase().contains(endParameterSection)) {
+                    found = false;
+                } else if (found) {
+                    if (line.contains("=")) {
+                        Parameter myParameter = new Parameter();
+                        String paramString = line.trim();
+                        paramString = paramString.replace(";", "");
+                        String[] parts = paramString.split("=");
+                        myParameter.setVariable(parts[0]);
+                        myParameter.setValue(parts[1]);
+                        loadedParams.add(myParameter);
+                    }
+                }
+
+                line = bufferedReader.readLine();
+            }
+
+            parameters.clear();
+            parameters.addAll(loadedParams);
+            bufferedReader.close();
+
+        } catch (Exception ex) {
+            logger.error("Error Line: " + ex);
+        }
+    }
+
+    private void saveParametersToFile() {
+        String oldFileName = phaserSrcCodeMainFilePath.get();
+        String tmpFileName = phaserSrcCodeMainFilePath.get() + "_tmp";
+
+        BufferedReader br = null;
+        BufferedWriter bw = null;
+        try {
+            br = new BufferedReader(new FileReader(oldFileName));
+            bw = new BufferedWriter(new FileWriter(tmpFileName));
+            String line = br.readLine();
+            String startParameterSectionLine = "";
+            String endParameterSectionLine = "";
+            boolean found = false;
+            while (line != null) {
+                
+                if (line.toLowerCase().contains(startParameterSection)) {
+                    found = true;
+                    startParameterSectionLine = line;
+                } else if (line.toLowerCase().contains(endParameterSection)) {
+                    found = false;
+                    endParameterSectionLine = line;
+                    line = startParameterSectionLine + "\n";
+                    for (Parameter param: parameters) {
+                        line = line.concat(param.getVariable() + "=" + param.getValue() + ";\n");
+                    }
+                    line = line.concat(endParameterSectionLine);
+                } else if (found) {
+                    line = "";
+                }
+                
+                if (!found) {
+                    bw.write(line + "\n");
+                }
+                line = br.readLine();
+            }
+        } catch (Exception ex) {
+            logger.error("Error Line: " + ex);
+        } finally {
+            try {
+                if (br != null) {
+                    br.close();
+                }
+            } catch (IOException e) {
+                //
+            }
+            try {
+                if (bw != null) {
+                    bw.close();
+                }
+            } catch (IOException ex) {
+                logger.error("Error Line: " + ex);
+            }
+        }
+        // Once everything is complete, delete old file..
+        File oldFile = new File(oldFileName);
+        oldFile.delete();
+
+        // And rename tmp file's name to old file name
+        File newFile = new File(tmpFileName);
+        newFile.renameTo(oldFile);
+    }
+
+    private void refreshParameterSection() {
+        parametersVBox.getChildren().clear();
+        for (Parameter param : parameters) {
+            Label label = new Label();
+            label.textProperty().bindBidirectional(param.variableProperty());
+            TextField textField = new TextField();
+            textField.textProperty().bindBidirectional(param.valueProperty());
+            HBox hBox = new HBox(label, textField);
+            hBox.setStyle("-fx-spacing: 5");
+            hBox.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(textField, Priority.ALWAYS);
+            parametersVBox.getChildren().add(hBox);
+        }
+    }
+
     /**
      * Loads data from the specified file.
      *
      * @param file
      */
-    public void loadPersonDataFromFile(File file) {
+    public void loadDataFromFile(File file) {
         try {
             JAXBContext context = JAXBContext
                     .newInstance(GatewaysListWrapper.class);
@@ -449,7 +606,7 @@ public class Sepand extends Application {
      *
      * @param file
      */
-    public void savePersonDataToFile(File file) {
+    public void saveDataToFile(File file) {
         try {
             JAXBContext context = JAXBContext
                     .newInstance(GatewaysListWrapper.class);
@@ -476,6 +633,7 @@ public class Sepand extends Application {
     private void storeCurrentSetting() {
         Preferences prefs = Preferences.userNodeForPackage(Sepand.class);
         prefs.put("phaserSrcCodePath", phaserSrcCodePath.get());
+        prefs.put("phaserSrcCodeMainFilePath", phaserSrcCodeMainFilePath.get());
         prefs.put("defaultMonitorSrcCodePath", defaultMonitorSrcCodePath.get());
         File file = new File(xmlFilePath);
         if (!file.exists()) {
@@ -485,16 +643,17 @@ public class Sepand extends Application {
                 logger.error("Error Line: " + ex);
             }
         }
-        savePersonDataToFile(file);
+        saveDataToFile(file);
     }
 
     private void restoreCurrentSetting() {
         Preferences prefs = Preferences.userNodeForPackage(Sepand.class);
         File file = new File(xmlFilePath);
         if (file.exists()) {
-            loadPersonDataFromFile(file);
+            loadDataFromFile(file);
         }
         phaserSrcCodePath.set(prefs.get("phaserSrcCodePath", ""));
+        phaserSrcCodeMainFilePath.set(prefs.get("phaserSrcCodeMainFilePath", ""));
         defaultMonitorSrcCodePath.set(prefs.get("defaultMonitorSrcCodePath", ""));
     }
 

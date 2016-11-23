@@ -8,7 +8,7 @@
   </information>
   <resources>
     <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
-    <jar href="Sepand.jar" size="26163" download="eager" />
+    <jar href="Sepand.jar" size="30419" download="eager" />
     <jar href="lib/log4j-1.2.17.jar" size="489883" download="eager" />
   </resources>
   <applet-desc  width="800" height="600" main-class="com.javafx.main.NoJavaFXFallback"  name="Sepand" >

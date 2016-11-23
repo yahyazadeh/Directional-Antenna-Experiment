@@ -44,6 +44,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -90,7 +92,7 @@ public class Sepand extends Application {
     private TableView<Gateway> motesTable = new TableView<>();
     private ObservableList<Gateway> gateways = FXCollections.observableArrayList();
     private ObservableList<Parameter> parameters = FXCollections.observableArrayList();
-    private VBox parametersVBox = new VBox();
+    private GridPane parametersGridPane = new GridPane();
 
     @Override
     public void stop() throws Exception {
@@ -149,7 +151,9 @@ public class Sepand extends Application {
         titledPane.setCollapsible(false);
         titledPane.setPadding(new Insets(5, 5, 5, 5));
 
-        parametersVBox.setSpacing(7);
+        parametersGridPane.setHgap(10);
+        parametersGridPane.setVgap(7);
+//        parametersGridPane.setPadding(new Insets(10, 0, 10, 0));
 
         Button refreshParameterButton = new Button("Refresh");
         refreshParameterButton.setMinWidth(100);
@@ -176,7 +180,7 @@ public class Sepand extends Application {
         parameterButtonsHBox.setStyle("-fx-spacing: 5");
         parameterButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
 
-        VBox parentBox = new VBox(parametersVBox, parameterButtonsHBox);
+        VBox parentBox = new VBox(parametersGridPane, parameterButtonsHBox);
         parentBox.setSpacing(10);
         TitledPane parametersTP = new TitledPane("Parameters", parentBox);
         parametersTP.setCollapsible(false);
@@ -509,7 +513,7 @@ public class Sepand extends Application {
             String endParameterSectionLine = "";
             boolean found = false;
             while (line != null) {
-                
+
                 if (line.toLowerCase().contains(startParameterSection)) {
                     found = true;
                     startParameterSectionLine = line;
@@ -517,14 +521,14 @@ public class Sepand extends Application {
                     found = false;
                     endParameterSectionLine = line;
                     line = startParameterSectionLine + "\n";
-                    for (Parameter param: parameters) {
+                    for (Parameter param : parameters) {
                         line = line.concat(param.getVariable() + "=" + param.getValue() + ";\n");
                     }
                     line = line.concat(endParameterSectionLine);
                 } else if (found) {
                     line = "";
                 }
-                
+
                 if (!found) {
                     bw.write(line + "\n");
                 }
@@ -537,8 +541,8 @@ public class Sepand extends Application {
                 if (br != null) {
                     br.close();
                 }
-            } catch (IOException e) {
-                //
+            } catch (IOException ex) {
+                logger.error("Error Line: " + ex);
             }
             try {
                 if (bw != null) {
@@ -548,28 +552,50 @@ public class Sepand extends Application {
                 logger.error("Error Line: " + ex);
             }
         }
-        // Once everything is complete, delete old file..
+
         File oldFile = new File(oldFileName);
         oldFile.delete();
 
-        // And rename tmp file's name to old file name
         File newFile = new File(tmpFileName);
         newFile.renameTo(oldFile);
     }
 
     private void refreshParameterSection() {
-        parametersVBox.getChildren().clear();
+        parametersGridPane.getChildren().clear();
+        parametersGridPane.getColumnConstraints().clear();
+        int columnIndex = 0;
+        int rowIndex = 0;
+        int itemIndex = 1;
         for (Parameter param : parameters) {
             Label label = new Label();
             label.textProperty().bindBidirectional(param.variableProperty());
             TextField textField = new TextField();
             textField.textProperty().bindBidirectional(param.valueProperty());
-            HBox hBox = new HBox(label, textField);
-            hBox.setStyle("-fx-spacing: 5");
-            hBox.setAlignment(Pos.CENTER_LEFT);
-            HBox.setHgrow(textField, Priority.ALWAYS);
-            parametersVBox.getChildren().add(hBox);
+            parametersGridPane.add(label, columnIndex, rowIndex);
+            columnIndex++;
+            parametersGridPane.add(textField, columnIndex, rowIndex);
+            columnIndex++;
+            if (itemIndex % 2 == 0) {
+                rowIndex++;
+                columnIndex = 0;
+            }
+            itemIndex++;
         }
+        ColumnConstraints column1 = new ColumnConstraints();
+        column1.setPercentWidth(20);
+        parametersGridPane.getColumnConstraints().add(column1);
+
+        ColumnConstraints column2 = new ColumnConstraints();
+        column2.setPercentWidth(30);
+        parametersGridPane.getColumnConstraints().add(column2);
+
+        ColumnConstraints column3 = new ColumnConstraints();
+        column3.setPercentWidth(20);
+        parametersGridPane.getColumnConstraints().add(column3);
+
+        ColumnConstraints column4 = new ColumnConstraints();
+        column4.setPercentWidth(30);
+        parametersGridPane.getColumnConstraints().add(column4);
     }
 
     /**
@@ -591,7 +617,8 @@ public class Sepand extends Application {
                 gateways.addAll(wrapper.getGateways());
             }
 
-        } catch (Exception e) { // catches ANY exception
+        } catch (Exception ex) { // catches ANY exception
+            logger.error("Error Line: " + ex);
             Alert alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error");
             alert.setHeaderText("Could not load data");
@@ -620,7 +647,8 @@ public class Sepand extends Application {
             // Marshalling and saving XML to the file.
             m.marshal(wrapper, file);
 
-        } catch (Exception e) { // catches ANY exception
+        } catch (Exception ex) { // catches ANY exception
+            logger.error("Error Line: " + ex);
             Alert alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error");
             alert.setHeaderText("Could not save data");

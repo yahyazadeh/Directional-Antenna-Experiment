@@ -19,6 +19,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -52,6 +54,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.converter.NumberStringConverter;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
@@ -63,6 +66,7 @@ import sepand.entities.GatewaysListWrapper;
 import sepand.entities.Parameter;
 import sepand.enums.SourceCode;
 import sepand.util.CommandUtil;
+import sepand.util.RaspListener;
 
 /**
  *
@@ -93,6 +97,10 @@ public class Sepand extends Application {
     private ObservableList<Gateway> gateways = FXCollections.observableArrayList();
     private ObservableList<Parameter> parameters = FXCollections.observableArrayList();
     private GridPane parametersGridPane = new GridPane();
+    private IntegerProperty fromPort = new SimpleIntegerProperty();
+    private IntegerProperty toPort = new SimpleIntegerProperty();
+    private StringProperty destListenerFilePath = new SimpleStringProperty();
+    private StringProperty suffixFileName = new SimpleStringProperty();
 
     @Override
     public void stop() throws Exception {
@@ -308,6 +316,67 @@ public class Sepand extends Application {
         motesTab.setContent(motesVBox);
         tabPane.getTabs().add(motesTab);
 
+        Tab listenerTab = new Tab();
+        listenerTab.setClosable(false);
+        listenerTab.setText("Listeners");
+
+        Label rangeLabel = new Label("Port range    from:");
+        TextField fromTextField = new TextField();
+        fromTextField.textProperty().bindBidirectional(fromPort, new NumberStringConverter());
+        fromTextField.setMaxWidth(70);
+        Label toLabel = new Label(" to:");
+        TextField toTextField = new TextField();
+        toTextField.textProperty().bindBidirectional(toPort, new NumberStringConverter());
+        toTextField.setMaxWidth(70);
+        Pane lstnPane = new Pane();
+        Button stopStartButton = new Button("Start");
+        stopStartButton.setMinWidth(80);
+        stopStartButton.setOnAction(
+                new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(final ActionEvent e) {
+                if (inputCheck()) {
+                    startAllListeners();
+                }
+            }
+        });
+        Label destLabel = new Label("Destination file(s):");
+        TextField destTextField = new TextField();
+        destTextField.textProperty().bindBidirectional(destListenerFilePath);
+        Label suffixLabel = new Label(" Suffix:");
+        TextField suffixTextField = new TextField();
+        suffixTextField.textProperty().bindBidirectional(suffixFileName);
+        Label numLabel = new Label("<Number>");
+
+        HBox listenerConfig1HBox = new HBox(destLabel, destTextField, suffixLabel, suffixTextField, numLabel);
+        listenerConfig1HBox.setStyle("-fx-spacing: 5");
+        listenerConfig1HBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(destTextField, Priority.ALWAYS);
+
+        HBox listenerConfig2HBox = new HBox(rangeLabel, fromTextField, toLabel, toTextField, lstnPane, stopStartButton);
+        listenerConfig2HBox.setStyle("-fx-spacing: 5");
+        listenerConfig2HBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(lstnPane, Priority.ALWAYS);
+
+        VBox configVBox = new VBox(listenerConfig1HBox, listenerConfig2HBox);
+        configVBox.setSpacing(10);
+
+        TitledPane configListenerTP = new TitledPane("Configuration", configVBox);
+        configListenerTP.setCollapsible(false);
+        configListenerTP.setPadding(new Insets(5, 5, 5, 5));
+
+        VBox lstnrsVBox = new VBox();
+        lstnrsVBox.setSpacing(10);
+
+        TitledPane listenersTP = new TitledPane("Listeners", lstnrsVBox);
+        listenersTP.setCollapsible(false);
+        listenersTP.setPadding(new Insets(0, 5, 5, 5));
+
+        VBox listenerVBox = new VBox(configListenerTP, listenersTP);
+
+        listenerTab.setContent(listenerVBox);
+        tabPane.getTabs().add(listenerTab);
+
         mainPane.setCenter(tabPane);
 
         mainPane.prefHeightProperty().bind(scene.heightProperty());
@@ -460,6 +529,37 @@ public class Sepand extends Application {
         new Thread(task).start();
     }
 
+    private void startAllListeners() {
+        String filePath = destListenerFilePath.get();
+        String[] parts = filePath.split("\\.");
+        if (parts[1].equals("")) {
+            parts[1] = "txt";
+        }
+        for (int i = fromPort.get(), j = 0; i <= toPort.get(); i++, j++) {
+            startListener(i, parts[0] + suffixFileName.get() + String.valueOf(j) + "." + parts[1]);
+        }
+    }
+
+    private void startListener(int portNum, String filePath) {
+
+        Task<Void> task = new Task<Void>() {
+            @Override
+            public Void call() throws Exception {
+                RaspListener raspListener = new RaspListener();
+                raspListener.start(portNum, filePath);
+                return null;
+            }
+        };
+
+        task.setOnRunning((e) -> {
+            System.out.println("Running " + portNum);
+        });
+        task.setOnSucceeded((e) -> {
+            System.out.println("Success " + portNum);
+        });
+        new Thread(task).start();
+    }
+
     private void loadParametersFromFile() {
         BufferedReader bufferedReader;
         try {
@@ -479,7 +579,9 @@ public class Sepand extends Application {
                     if (line.contains("=")) {
                         Parameter myParameter = new Parameter();
                         String paramString = line.trim();
-                        paramString = paramString.replace(";", "");
+                        if (paramString.charAt(paramString.length() - 1) == ',') {
+                            paramString = paramString.substring(0, paramString.length() - 1);
+                        }
                         String[] parts = paramString.split("=");
                         myParameter.setVariable(parts[0]);
                         myParameter.setValue(parts[1]);
@@ -522,7 +624,11 @@ public class Sepand extends Application {
                     endParameterSectionLine = line;
                     line = startParameterSectionLine + "\n";
                     for (Parameter param : parameters) {
-                        line = line.concat(param.getVariable() + "=" + param.getValue() + ";\n");
+                        if (param.equals(parameters.get(parameters.size() - 1))) {
+                            line = line.concat(param.getVariable() + "=" + param.getValue() + "\n");
+                        } else {
+                            line = line.concat(param.getVariable() + "=" + param.getValue() + ",\n");
+                        }
                     }
                     line = line.concat(endParameterSectionLine);
                 } else if (found) {
@@ -596,6 +702,14 @@ public class Sepand extends Application {
         ColumnConstraints column4 = new ColumnConstraints();
         column4.setPercentWidth(30);
         parametersGridPane.getColumnConstraints().add(column4);
+    }
+
+    private boolean inputCheck() {
+        if (fromPort.get() <= toPort.get()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**

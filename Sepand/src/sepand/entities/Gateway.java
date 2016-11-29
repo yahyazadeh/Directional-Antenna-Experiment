@@ -18,14 +18,20 @@ public class Gateway {
     private SimpleStringProperty ipAddress;
     private SimpleStringProperty username;
     private SimpleStringProperty password;
-    private SimpleStringProperty installationStatus;
+    private SimpleStringProperty mote0InstallationStatus;
+    private SimpleStringProperty mote1InstallationStatus;
+    private SimpleStringProperty mote2InstallationStatus;
+    private SimpleStringProperty mote3InstallationStatus;
 
     public Gateway() {
         name = new SimpleStringProperty();
         ipAddress = new SimpleStringProperty();
         username = new SimpleStringProperty();
         password = new SimpleStringProperty();
-        installationStatus = new SimpleStringProperty();
+        mote0InstallationStatus = new SimpleStringProperty();
+        mote1InstallationStatus = new SimpleStringProperty();
+        mote2InstallationStatus = new SimpleStringProperty();
+        mote3InstallationStatus = new SimpleStringProperty();
     }
 
     public final String getName() {
@@ -76,16 +82,52 @@ public class Gateway {
         this.password.setValue(password);
     }
 
-    public final String getInstallationStatus() {
-        return installationStatus.getValue();
+    public final String getMote0InstallationStatus() {
+        return mote0InstallationStatus.getValue();
     }
     
-    public StringProperty installationStatusProperty() {
-        return installationStatus;
+    public StringProperty mote0InstallationStatusProperty() {
+        return mote0InstallationStatus;
     }
 
-    public final void setInstallationStatus(String installationStatus) {
-        this.installationStatus.setValue(installationStatus);
+    public final void setMote0InstallationStatus(String mote0InstallationStatus) {
+        this.mote0InstallationStatus.setValue(mote0InstallationStatus);
+    }
+
+    public final String getMote1InstallationStatus() {
+        return mote1InstallationStatus.getValue();
+    }
+    
+    public StringProperty mote1InstallationStatusProperty() {
+        return mote1InstallationStatus;
+    }
+
+    public final void setMote1InstallationStatus(String mote1InstallationStatus) {
+        this.mote1InstallationStatus.setValue(mote1InstallationStatus);
+    }
+
+    public final String getMote2InstallationStatus() {
+        return mote2InstallationStatus.getValue();
+    }
+    
+    public StringProperty mote2InstallationStatusProperty() {
+        return mote2InstallationStatus;
+    }
+
+    public final void setMote2InstallationStatus(String mote2InstallationStatus) {
+        this.mote2InstallationStatus.setValue(mote2InstallationStatus);
+    }
+
+    public final String getMote3InstallationStatus() {
+        return mote3InstallationStatus.getValue();
+    }
+    
+    public StringProperty mote3InstallationStatusProperty() {
+        return mote3InstallationStatus;
+    }
+
+    public final void setMote3InstallationStatus(String mote3InstallationStatus) {
+        this.mote3InstallationStatus.setValue(mote3InstallationStatus);
     }
 
 }

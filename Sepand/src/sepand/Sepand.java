@@ -8,7 +8,6 @@ package sepand;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
 import javafx.beans.property.IntegerProperty;
@@ -25,6 +23,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -45,6 +44,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -83,7 +84,7 @@ public class Sepand extends Application {
     final private String motesInstallSuccessSigniture = "Reset device";
     final private int motesInstallCommandNumberoFRetry = 1;
     final private String defaultCodePathOnGateway = "/home/pi/github/MansOS/apps/santa-test/src/app_monitor/";
-    final private String moteInstallCommand = "export BSLPORT=/dev/ttyUSB[0-3] && make telosb upload";
+    final private String moteInstallCommand = "export BSLPORT=/dev/ttyUSB%d && make telosb upload";
     final private String xmlFilePath = "setting.xml";
     final private String startParameterSection = "start parameter section";
     final private String endParameterSection = "end parameter section";
@@ -96,11 +97,13 @@ public class Sepand extends Application {
     private TableView<Gateway> motesTable = new TableView<>();
     private ObservableList<Gateway> gateways = FXCollections.observableArrayList();
     private ObservableList<Parameter> parameters = FXCollections.observableArrayList();
-    private GridPane parametersGridPane = new GridPane();
+    private ObservableMap<String, ObservableList<Parameter>> parametersMap = FXCollections.observableHashMap();
+    private GridPane parametersPane = new GridPane();
     private IntegerProperty fromPort = new SimpleIntegerProperty();
     private IntegerProperty toPort = new SimpleIntegerProperty();
     private StringProperty destListenerFilePath = new SimpleStringProperty();
     private StringProperty suffixFileName = new SimpleStringProperty();
+    private List<String> keySet = new ArrayList<String>();
 
     @Override
     public void stop() throws Exception {
@@ -159,10 +162,7 @@ public class Sepand extends Application {
         titledPane.setCollapsible(false);
         titledPane.setPadding(new Insets(5, 5, 5, 5));
 
-        parametersGridPane.setHgap(10);
-        parametersGridPane.setVgap(7);
 //        parametersGridPane.setPadding(new Insets(10, 0, 10, 0));
-
         Button refreshParameterButton = new Button("Refresh");
         refreshParameterButton.setMinWidth(100);
         refreshParameterButton.setOnAction(
@@ -188,7 +188,7 @@ public class Sepand extends Application {
         parameterButtonsHBox.setStyle("-fx-spacing: 5");
         parameterButtonsHBox.setAlignment(Pos.CENTER_RIGHT);
 
-        VBox parentBox = new VBox(parametersGridPane, parameterButtonsHBox);
+        VBox parentBox = new VBox(parametersPane, parameterButtonsHBox);
         parentBox.setSpacing(10);
         TitledPane parametersTP = new TitledPane("Parameters", parentBox);
         parametersTP.setCollapsible(false);
@@ -265,9 +265,15 @@ public class Sepand extends Application {
         nameCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("name"));
         TableColumn ipCol = new TableColumn("Gateway IP");
         ipCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("ipAddress"));
-        TableColumn isCol = new TableColumn("Installation Status");
-        isCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("installationStatus"));
-        motesTable.getColumns().addAll(nameCol, ipCol, isCol);
+        TableColumn mote0InstStatusCol = new TableColumn("Mote 0 Inst. Status");
+        mote0InstStatusCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("mote0InstallationStatus"));
+        TableColumn mote1InstStatusCol = new TableColumn("Mote 1 Inst. Status");
+        mote1InstStatusCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("mote1InstallationStatus"));
+        TableColumn mote2InstStatusCol = new TableColumn("Mote 2 Inst. Status");
+        mote2InstStatusCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("mote2InstallationStatus"));
+        TableColumn mote3InstStatusCol = new TableColumn("Mote 3 Inst. Status");
+        mote3InstStatusCol.setCellValueFactory(new PropertyValueFactory<Gateway, String>("mote3InstallationStatus"));
+        motesTable.getColumns().addAll(nameCol, ipCol, mote0InstStatusCol, mote1InstStatusCol, mote2InstStatusCol, mote3InstStatusCol);
         motesTable.setItems(gateways);
 
         Button newGatewayButton = new Button("New");
@@ -481,23 +487,27 @@ public class Sepand extends Application {
         String command = moteInstallCommand;
         command = "cd " + defaultCodePathOnGateway + " ; " + command;
         for (Gateway gateway : gateways) {
-            installOnMotesOfGateway(gateway, command);
+            for (int i = 0; i <= 3; i++) {
+                installOnMote(gateway, command, i);
+            }
         }
     }
 
-    private void installOnMotesOfGateway(Gateway gateway, String command) {
+    private void installOnMote(Gateway gateway, String command, int moteNumber) {
         Task<Boolean> task = new Task<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 String scpResult = "";
                 String sshResult = "";
+                String moteCommand;
+                moteCommand = String.format(command, moteNumber);
                 scpResult = cmd.executeSCPCommand(gateway.getIpAddress(), gateway.getUsername(),
                         gateway.getPassword(), defaultMonitorSrcCodePath.get() + "/*", defaultCodePathOnGateway);
                 if (scpResult.contains("")) {
                     int retry = motesInstallCommandNumberoFRetry;
                     do {
                         sshResult = cmd.executeSSHCommand(gateway.getIpAddress(), gateway.getUsername(),
-                                gateway.getPassword(), command);
+                                gateway.getPassword(), moteCommand);
                         retry--;
                     } while (!sshResult.contains(motesInstallSuccessSigniture) && retry >= 0);
                 }
@@ -510,15 +520,55 @@ public class Sepand extends Application {
         };
 
         task.setOnRunning((e) -> {
-            gateway.setInstallationStatus("Please Wait...");
+            switch (moteNumber) {
+                case 0:
+                    gateway.setMote0InstallationStatus("Please Wait...");
+                    break;
+                case 1:
+                    gateway.setMote1InstallationStatus("Please Wait...");
+                    break;
+                case 2:
+                    gateway.setMote2InstallationStatus("Please Wait...");
+                    break;
+                case 3:
+                    gateway.setMote3InstallationStatus("Please Wait...");
+                    break;
+            }
+            gateway.setMote0InstallationStatus("Please Wait...");
         });
         task.setOnSucceeded((e) -> {
             try {
                 Boolean result = task.get();
                 if (!result) {
-                    gateway.setInstallationStatus("Error!");
+                    switch (moteNumber) {
+                        case 0:
+                            gateway.setMote0InstallationStatus("Error!");
+                            break;
+                        case 1:
+                            gateway.setMote1InstallationStatus("Error!");
+                            break;
+                        case 2:
+                            gateway.setMote2InstallationStatus("Error!");
+                            break;
+                        case 3:
+                            gateway.setMote3InstallationStatus("Error!");
+                            break;
+                    }
                 } else {
-                    gateway.setInstallationStatus("Successful");
+                    switch (moteNumber) {
+                        case 0:
+                            gateway.setMote0InstallationStatus("Successful");
+                            break;
+                        case 1:
+                            gateway.setMote1InstallationStatus("Successful");
+                            break;
+                        case 2:
+                            gateway.setMote2InstallationStatus("Successful");
+                            break;
+                        case 3:
+                            gateway.setMote3InstallationStatus("Successful");
+                            break;
+                    }
                 }
             } catch (InterruptedException ex) {
                 logger.error("Error Line: " + ex);
@@ -562,6 +612,7 @@ public class Sepand extends Application {
 
     private void loadParametersFromFile() {
         BufferedReader bufferedReader;
+        keySet.clear();
         try {
             bufferedReader = new BufferedReader(
                     new FileReader(phaserSrcCodeMainFilePath.get()));
@@ -570,11 +621,23 @@ public class Sepand extends Application {
             String line = bufferedReader.readLine();
 
             boolean found = false;
+            String key = "";
             while (line != null) {
                 if (line.toLowerCase().contains(startParameterSection)) {
+                    ObservableList<Parameter> parameterList = FXCollections.observableArrayList();
                     found = true;
+                    line = bufferedReader.readLine();
+                    if (line.contains("description:")) {
+                        String[] parts = line.split(":");
+                        key = parts[1].trim();
+                        keySet.add(key);
+                        parametersMap.put(key, parameterList);
+                    }
                 } else if (line.toLowerCase().contains(endParameterSection)) {
                     found = false;
+                    parametersMap.get(key).clear();
+                    parametersMap.get(key).addAll(loadedParams);
+                    loadedParams.clear();
                 } else if (found) {
                     if (line.contains("=")) {
                         Parameter myParameter = new Parameter();
@@ -592,8 +655,8 @@ public class Sepand extends Application {
                 line = bufferedReader.readLine();
             }
 
-            parameters.clear();
-            parameters.addAll(loadedParams);
+//            parameters.clear();
+//            parameters.addAll(loadedParams);
             bufferedReader.close();
 
         } catch (Exception ex) {
@@ -612,19 +675,26 @@ public class Sepand extends Application {
             bw = new BufferedWriter(new FileWriter(tmpFileName));
             String line = br.readLine();
             String startParameterSectionLine = "";
+            String descriptionLine = "";
             String endParameterSectionLine = "";
+            String key = "";
             boolean found = false;
             while (line != null) {
 
                 if (line.toLowerCase().contains(startParameterSection)) {
                     found = true;
                     startParameterSectionLine = line;
+                    line = br.readLine();
+                    descriptionLine = line;
+                    String parts[] = descriptionLine.split(":");
+                    key = parts[1].trim();
                 } else if (line.toLowerCase().contains(endParameterSection)) {
                     found = false;
                     endParameterSectionLine = line;
                     line = startParameterSectionLine + "\n";
-                    for (Parameter param : parameters) {
-                        if (param.equals(parameters.get(parameters.size() - 1))) {
+                    line = line.concat(descriptionLine + "\n");
+                    for (Parameter param : parametersMap.get(key)) {
+                        if (param.equals(parametersMap.get(key).get(parametersMap.get(key).size() - 1))) {
                             line = line.concat(param.getVariable() + "=" + param.getValue() + "\n");
                         } else {
                             line = line.concat(param.getVariable() + "=" + param.getValue() + ",\n");
@@ -667,41 +737,62 @@ public class Sepand extends Application {
     }
 
     private void refreshParameterSection() {
-        parametersGridPane.getChildren().clear();
-        parametersGridPane.getColumnConstraints().clear();
-        int columnIndex = 0;
-        int rowIndex = 0;
-        int itemIndex = 1;
-        for (Parameter param : parameters) {
-            Label label = new Label();
-            label.textProperty().bindBidirectional(param.variableProperty());
-            TextField textField = new TextField();
-            textField.textProperty().bindBidirectional(param.valueProperty());
-            parametersGridPane.add(label, columnIndex, rowIndex);
-            columnIndex++;
-            parametersGridPane.add(textField, columnIndex, rowIndex);
-            columnIndex++;
-            if (itemIndex % 2 == 0) {
-                rowIndex++;
-                columnIndex = 0;
+        parametersPane.getChildren().clear();
+        TabPane parametersTabPane = new TabPane();
+        parametersTabPane.setStyle("-fx-background-color: gainsboro");
+        for (String key : keySet) {
+            Tab myTab = new Tab();
+            myTab.setClosable(false);
+            myTab.setText(key);
+            GridPane parametersGridPane = new GridPane();
+            parametersGridPane.setPadding(new Insets(10, 10, 10, 10));
+            parametersGridPane.setHgap(10);
+            parametersGridPane.setVgap(7);
+//            parametersGridPane.getChildren().clear();
+//            parametersGridPane.getColumnConstraints().clear();
+            int columnIndex = 0;
+            int rowIndex = 0;
+            int itemIndex = 1;
+            for (Parameter param : parametersMap.get(key)) {
+                Label label = new Label();
+                label.textProperty().bindBidirectional(param.variableProperty());
+                TextField textField = new TextField();
+                textField.textProperty().bindBidirectional(param.valueProperty());
+                parametersGridPane.add(label, columnIndex, rowIndex);
+                columnIndex++;
+                parametersGridPane.add(textField, columnIndex, rowIndex);
+                columnIndex++;
+                if (itemIndex % 2 == 0) {
+                    rowIndex++;
+                    columnIndex = 0;
+                }
+                itemIndex++;
             }
-            itemIndex++;
+            ColumnConstraints column1 = new ColumnConstraints();
+            column1.setPercentWidth(20);
+            parametersGridPane.getColumnConstraints().add(column1);
+
+            ColumnConstraints column2 = new ColumnConstraints();
+            column2.setPercentWidth(30);
+            parametersGridPane.getColumnConstraints().add(column2);
+
+            ColumnConstraints column3 = new ColumnConstraints();
+            column3.setPercentWidth(20);
+            parametersGridPane.getColumnConstraints().add(column3);
+
+            ColumnConstraints column4 = new ColumnConstraints();
+            column4.setPercentWidth(30);
+            parametersGridPane.getColumnConstraints().add(column4);
+
+            myTab.setContent(parametersGridPane);
+            parametersTabPane.getTabs().add(myTab);
         }
-        ColumnConstraints column1 = new ColumnConstraints();
-        column1.setPercentWidth(20);
-        parametersGridPane.getColumnConstraints().add(column1);
 
-        ColumnConstraints column2 = new ColumnConstraints();
-        column2.setPercentWidth(30);
-        parametersGridPane.getColumnConstraints().add(column2);
-
-        ColumnConstraints column3 = new ColumnConstraints();
-        column3.setPercentWidth(20);
-        parametersGridPane.getColumnConstraints().add(column3);
-
-        ColumnConstraints column4 = new ColumnConstraints();
-        column4.setPercentWidth(30);
-        parametersGridPane.getColumnConstraints().add(column4);
+        parametersTabPane.setCenterShape(true);
+        parametersPane.add(parametersTabPane, 0, 0);
+        ColumnConstraints parentCol = new ColumnConstraints();
+        parentCol.setPercentWidth(100);
+        parametersPane.getColumnConstraints().add(parentCol);
     }
 
     private boolean inputCheck() {

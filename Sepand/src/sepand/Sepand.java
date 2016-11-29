@@ -738,6 +738,7 @@ public class Sepand extends Application {
 
     private void refreshParameterSection() {
         parametersPane.getChildren().clear();
+        parametersPane.getColumnConstraints().clear();
         TabPane parametersTabPane = new TabPane();
         parametersTabPane.setStyle("-fx-background-color: gainsboro");
         for (String key : keySet) {

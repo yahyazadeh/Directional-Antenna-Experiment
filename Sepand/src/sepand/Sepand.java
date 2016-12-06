@@ -104,6 +104,7 @@ public class Sepand extends Application {
     private StringProperty destListenerFilePath = new SimpleStringProperty();
     private StringProperty suffixFileName = new SimpleStringProperty();
     private List<String> keySet = new ArrayList<String>();
+    private VBox lstnrsVBox;
 
     @Override
     public void stop() throws Exception {
@@ -371,9 +372,11 @@ public class Sepand extends Application {
         configListenerTP.setCollapsible(false);
         configListenerTP.setPadding(new Insets(5, 5, 5, 5));
 
-        VBox lstnrsVBox = new VBox();
+        lstnrsVBox = new VBox();
         lstnrsVBox.setSpacing(10);
 
+        lstnrsVBox.getChildren().add(new Label("There is no listener created yet!"));
+        
         TitledPane listenersTP = new TitledPane("Listeners", lstnrsVBox);
         listenersTP.setCollapsible(false);
         listenersTP.setPadding(new Insets(0, 5, 5, 5));
@@ -587,27 +590,42 @@ public class Sepand extends Application {
         if (parts[1].equals("")) {
             parts[1] = "txt";
         }
+        lstnrsVBox.getChildren().clear();
         for (int i = fromPort.get(), j = 0; i <= toPort.get(); i++, j++) {
-            startListener(i, parts[0] + suffixFileName.get() + String.valueOf(j) + "." + parts[1]);
+            startListener(i, parts[0] + suffixFileName.get() + String.valueOf(j) + "." + parts[1], lstnrsVBox);
         }
     }
 
-    private void startListener(int portNum, String filePath) {
-
+    private void startListener(int portNum, String filePath, VBox vbox) {
+        Label label1 = new Label("PortNo:");
+        Label portNoLabel = new Label(String.valueOf(portNum));
+        Label label2 = new Label(" Status: ");
+        final Label statusLabel = new Label();
+        Label label3 = new Label(" Destination File:");
+        Label fileLabel = new Label(filePath);
+        Pane pane = new Pane();
+        HBox hBox = new HBox(label1, portNoLabel, label2, statusLabel, label3, fileLabel, pane);
+                vbox.getChildren().add(hBox);
+        hBox.setStyle("-fx-spacing: 5");
+        hBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(pane, Priority.ALWAYS);
+        
         Task<Void> task = new Task<Void>() {
             @Override
             public Void call() throws Exception {
                 RaspListener raspListener = new RaspListener();
-                raspListener.start(portNum, filePath);
+                raspListener.start(portNum, filePath);    
                 return null;
             }
         };
 
         task.setOnRunning((e) -> {
             System.out.println("Running " + portNum);
+            statusLabel.setText("Start Listening...");
         });
         task.setOnSucceeded((e) -> {
             System.out.println("Success " + portNum);
+            statusLabel.setText("A connection is made.");
         });
         new Thread(task).start();
     }

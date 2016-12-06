@@ -484,13 +484,15 @@ public class Sepand extends Application {
     }
 
     private void runInstallForAllMotesCommand() {
-        String command = moteInstallCommand;
-        command = "cd " + defaultCodePathOnGateway + " ; " + command;
-        for (Gateway gateway : gateways) {
+        Gateway selectedGateway = motesTable.getSelectionModel().getSelectedItem();
+        if (selectedGateway != null) {
+            String command = moteInstallCommand;
+            command = "cd " + defaultCodePathOnGateway + " ; " + command;
             for (int i = 0; i <= 3; i++) {
-                installOnMote(gateway, command, i);
+                installOnMote(selectedGateway, command, i);
             }
         }
+
     }
 
     private void installOnMote(Gateway gateway, String command, int moteNumber) {

@@ -88,6 +88,8 @@ public class Sepand extends Application {
     final private String xmlFilePath = "setting.xml";
     final private String startParameterSection = "start parameter section";
     final private String endParameterSection = "end parameter section";
+    final private String startSerialCommand = "python mulThreadedSerial.py -sIP %s -tSP %s";
+    final private String serialScriptPath = "/home/pi/DirectionalAntenna/serialScript";
 
     final private String backgroundColor = "lightgrey";
 
@@ -336,14 +338,25 @@ public class Sepand extends Application {
         toTextField.textProperty().bindBidirectional(toPort, new NumberStringConverter());
         toTextField.setMaxWidth(70);
         Pane lstnPane = new Pane();
-        Button stopStartButton = new Button("Start");
-        stopStartButton.setMinWidth(80);
+        Button stopStartButton = new Button("Start Listener");
+        stopStartButton.setMinWidth(100);
         stopStartButton.setOnAction(
                 new EventHandler<ActionEvent>() {
             @Override
             public void handle(final ActionEvent e) {
                 if (inputCheck()) {
                     startAllListeners();
+                }
+            }
+        });
+        Button startSerialButton = new Button("Start Serial");
+        startSerialButton.setMinWidth(100);
+        startSerialButton.setOnAction(
+                new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(final ActionEvent e) {
+                if (inputCheck()) {
+                    startAllSerialListener();
                 }
             }
         });
@@ -360,7 +373,7 @@ public class Sepand extends Application {
         listenerConfig1HBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(destTextField, Priority.ALWAYS);
 
-        HBox listenerConfig2HBox = new HBox(rangeLabel, fromTextField, toLabel, toTextField, lstnPane, stopStartButton);
+        HBox listenerConfig2HBox = new HBox(rangeLabel, fromTextField, toLabel, toTextField, lstnPane, stopStartButton, startSerialButton);
         listenerConfig2HBox.setStyle("-fx-spacing: 5");
         listenerConfig2HBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(lstnPane, Priority.ALWAYS);
@@ -628,6 +641,23 @@ public class Sepand extends Application {
             statusLabel.setText("A connection is made.");
         });
         new Thread(task).start();
+    }
+    
+    private void startAllSerialListener() {
+        PasswordDialog pd = new PasswordDialog();
+        Optional<String> result = pd.showAndWait();
+        result.ifPresent(password -> startAllSerial(password));
+    }
+    
+    private void startAllSerial(String password) {
+        for (int i = fromPort.get(); i <= toPort.get(); i=i+4) {
+            startSerial(password, "192.168.0.1", String.valueOf(i));
+        }
+    }
+    
+    private void startSerial(String password, String serverIP, String portNo) {
+        String command = String.format(startSerialCommand, serverIP, portNo);
+        cmd.executeCommand(serialScriptPath, command, true, password);
     }
 
     private void loadParametersFromFile() {

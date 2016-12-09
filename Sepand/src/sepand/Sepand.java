@@ -656,8 +656,16 @@ public class Sepand extends Application {
     }
     
     private void startSerial(String password, String serverIP, String portNo) {
-        String command = String.format(startSerialCommand, serverIP, portNo);
-        cmd.executeCommand(serialScriptPath, command, true, password);
+        String command = String.format(startSerialCommand, serverIP, portNo);  
+        Task<Void> task = new Task<Void>() {
+            @Override
+            public Void call() throws Exception {
+                cmd.executeCommand(serialScriptPath, command, true, password);
+                return null;
+            }
+        };
+        new Thread(task).start();
+        
     }
 
     private void loadParametersFromFile() {
